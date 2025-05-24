@@ -1,10 +1,11 @@
+import streamlit as st
 
 
-def greet():
-    return "Hello Transport-Projekt!"
+st.set_page_config(
+    page_title="Transport Station Live Feed",
+    page_icon="🚆",
+    layout="wide"
+)
 
-def main():
-    print(greet())
-
-if __name__ == "__main__":
-    main()
+st.title("🏠 Home")
+st.write("Willkommen bei deinem Transport-Projekt!")

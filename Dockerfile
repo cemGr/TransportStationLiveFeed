@@ -11,5 +11,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # 4. Quellcode kopieren
 COPY src/ src/
 
+EXPOSE 8501
+
 # 5. Default-Command
-CMD ["python", "src/main.py"]
+CMD ["streamlit", "run", "src/main.py", "--server.port=8501", "--server.address=0.0.0.0"]
