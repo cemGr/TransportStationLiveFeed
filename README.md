@@ -7,3 +7,10 @@ nearest station based on available devices, e.g. bikes, scooters, etc.
  3. Given a source and destination location, for example, Los Angeles, present
  the route on Google maps or another mapping product of a person using
  Metro bike
+
+## Installation
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
