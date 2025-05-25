@@ -1,5 +1,5 @@
 import pytest
-from src.config import add, divide , mult
+from src.math import add, divide , mult
 
 # This file shall be deleted, its just used for checking/ init pytest
 class TestCalc:

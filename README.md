@@ -13,4 +13,26 @@ nearest station based on available devices, e.g. bikes, scooters, etc.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+pip install --upgrade pip
 pip install -r requirements.txt
+streamlit run src/main.py
+```
+
+## Docker
+
+```bash
+docker build -t transport-app .
+docker run --rm -p 8501:8501 transport-app
+```
+
+## Pytest
+
+```bash
+pytest -q
+
+```
+
+## Want to add a new Page?
+```
+create a python file in the src/page folder. It will be automatical added to the ui. 
+```
