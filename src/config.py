@@ -1,10 +1,8 @@
-# this file shall be used for db but currently serves for testing pytest, du to the ini phase
-def add(a, b):
-    return a+b
 
-def divide(a, b):
-    return a/b
+import os
 
-
-def mult(a , b):
-    return a*b
+# Beispiel-Endpunkte
+DATA_OVERVIEW_URL = os.getenv(
+    "DATA_OVERVIEW_URL",
+    "https://bikeshare.metro.net/about/data/"
+)
