@@ -13,16 +13,10 @@ nearest station based on available devices, e.g. bikes, scooters, etc.
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
-pip install --upgrade pip 
+pip install --upgrade pip
 pip install -r requirements.txt
 streamlit run src/main.py
 ```
-
-```bash
-#if pip install --upgrade pip is not working
-python.exe -m pip install --upgrade pip
-```
-
 
 ## Docker
 

@@ -3,7 +3,3 @@ pytest
 
 #UI
 streamlit
-
-# GeoDataProcessing
-geopandas
-pyproj
