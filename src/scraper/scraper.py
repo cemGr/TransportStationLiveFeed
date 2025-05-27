@@ -21,6 +21,9 @@ from enum import Enum
 from tqdm import tqdm
 from pathlib import Path
 
+from src.data_processor.data_processor import clean_trip_csv, clean_station_csv
+
+
 # ------------------------------------------------------------------ ENUM & CONFIG
 class Kind(Enum):
     trip     = "trip"
@@ -72,6 +75,7 @@ def stream_download(url: str, dest: Path, session: requests.Session) -> Path | N
     return dest
 
 # ------------------------------------------------------------------ SCRAPER IMPLEMENTATIONS
+
 def scrape_trip(dest_dir: Path, session: requests.Session):
     html = session.get(DATA_PAGE, timeout=TIMEOUT).text
     soup = BeautifulSoup(html, "html.parser")
@@ -85,19 +89,45 @@ def scrape_trip(dest_dir: Path, session: requests.Session):
             skipped += 1
             continue
 
-        with zipfile.ZipFile(zip_path) as zf:
-            for m in zf.infolist():
-                if m.is_dir():
-                    continue
-                dst_file = dest_dir / Path(m.filename).name
-                if dst_file.exists():
-                    continue
-                with zf.open(m) as src, open(dst_file, "wb") as out:
-                    shutil.copyfileobj(src, out)
+        extract_trip_zip(dest_dir, zip_path)
+
         zip_path.unlink()
         extracted += 1
 
     print(f"Trip-data: {extracted} new archive(s) extracted, {skipped} already present")
+
+
+def extract_trip_zip(dest_dir, zip_path):
+    STATION_RE = re.compile(r"metro-bike-share-stations-\d{4}-\d{2}-\d{2}\.csv$", re.I)
+
+    with zipfile.ZipFile(zip_path) as zf:
+        for m in zf.infolist():
+            if m.is_dir():
+                continue
+
+            # Unique case only in some zips
+            if m.filename.startswith("__MACOSX/") or Path(m.filename).name.startswith("._"):
+                continue
+
+            # Unique case only in some zips
+            name = Path(m.filename).name
+            if STATION_RE.match(name):
+                station_raw = STATIC_DIR / name
+                if not station_raw.exists():
+                    with zf.open(m) as src, open(station_raw, "wb") as out:
+                        shutil.copyfileobj(src, out)
+                continue
+
+            dst_file = dest_dir / Path(m.filename).name
+            if dst_file.exists():
+                continue
+            with zf.open(m) as src, open(dst_file, "wb") as out:
+                shutil.copyfileobj(src, out)
+
+            # run cleaner immediately
+            latest_station = max(STATIC_DIR.glob("cleaned_station_data.csv"))
+            clean_trip_csv(dst_file, latest_station, TRIP_DIR)
+
 
 def scrape_station(dest_dir: Path, session: requests.Session):
     soup = _get_data_page(session)
@@ -115,6 +145,9 @@ def scrape_station(dest_dir: Path, session: requests.Session):
     else:
         write_atomic(target, r.content)
         print("Station table saved:", target.name)
+
+    #  run cleaner immediately
+    clean_station_csv(target, STATIC_DIR)
 
 def scrape_geojson(dest_dir: Path, session: requests.Session):
     soup = _get_data_page(session)
@@ -159,6 +192,15 @@ def main():
 
     kind = Kind(args.kind)
     dest = Path(args.dir)
+
+    RAW_ROOT  = dest
+    PROC_ROOT = RAW_ROOT.parent / "processed_data"
+    global STATIC_DIR, TRIP_DIR
+    STATIC_DIR = PROC_ROOT / "static"
+    TRIP_DIR = PROC_ROOT / "trip_data"
+    STATIC_DIR.mkdir(parents=True, exist_ok=True)
+    TRIP_DIR.mkdir(parents=True, exist_ok=True)
+
     if args.interval <= 0:
         run_once(kind, dest)
         return
