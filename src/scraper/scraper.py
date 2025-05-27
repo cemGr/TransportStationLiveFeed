@@ -16,8 +16,6 @@ from __future__ import annotations
 import argparse, time, os, re, sys, json, requests
 from datetime import datetime, timezone
 from enum import Enum
-from urllib.parse import urljoin
-from bs4 import BeautifulSoup
 from tqdm import tqdm
 from pathlib import Path
 
@@ -27,13 +25,13 @@ class Kind(Enum):
     station  = "station"
     geojson  = "geojson"
 
-PAGE_URL       = "https://bikeshare.metro.net/about/data/"
+DATA_PAGE       = "https://bikeshare.metro.net/about/data/"
 STATION_URL    = "https://bikeshare.metro.net/static/station_table.csv"
 GEOJSON_URL    = "https://bikeshare.metro.net/stations/stations.geojson"
 ZIP_RE         = re.compile(r"\btrips?.*\.zip$", re.I)
-UA             = "MetroScraper/1.0 (+https://github.com/yourname)"
+UA             = "MetroScraper/1.0"
 TIMEOUT        = 30
-DATA_PAGE       = "https://bikeshare.metro.net/about/data/"
+
 HEADERS_BROWSER = {
     "User-Agent": UA,
     "Accept-Language": "en-US,en;q=0.9",
@@ -73,9 +71,9 @@ def stream_download(url: str, dest: Path, session: requests.Session):
 
 # ------------------------------------------------------------------ SCRAPER IMPLEMENTATIONS
 def scrape_trip(dest_dir: Path, session: requests.Session):
-    html   = session.get(PAGE_URL, timeout=TIMEOUT).text
+    html   = session.get(DATA_PAGE, timeout=TIMEOUT).text
     soup   = BeautifulSoup(html, "html.parser")
-    links  = {urljoin(PAGE_URL, a["href"]) for a in soup.select("a[href]")
+    links  = {urljoin(DATA_PAGE, a["href"]) for a in soup.select("a[href]")
               if ZIP_RE.search(a["href"])}
     fresh = 0
     for url in sorted(links, reverse=True):
@@ -87,7 +85,7 @@ def scrape_station(dest_dir: Path, session: requests.Session):
     soup = _get_data_page(session)
     csv_url = _first_href(soup, "Station Table")
     if not csv_url:
-        print("⚠️  Station-table link not found")
+        print("Warning: Station-table link not found")
         return
 
     target = dest_dir / Path(csv_url).name
@@ -104,7 +102,7 @@ def scrape_geojson(dest_dir: Path, session: requests.Session):
     soup = _get_data_page(session)
     geo_url = _first_href(soup, "GeoJSON")
     if not geo_url:
-        print("⚠️  GeoJSON link not found")
+        print("Warning: GeoJSON link not found")
         return
 
     ts_utc = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
@@ -145,7 +143,6 @@ def main():
         run_once(kind, dest)
         return
 
-    # Continuous mode
     while True:
         try:
             run_once(kind, dest)
