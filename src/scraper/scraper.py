@@ -14,6 +14,8 @@ python src/scraper/scraper.py --kind geojson --dir ./scraper_data/live --interva
 """
 from __future__ import annotations
 import argparse, time, os, re, sys, json, requests
+import shutil
+import zipfile
 from datetime import datetime, timezone
 from enum import Enum
 from tqdm import tqdm
@@ -54,9 +56,9 @@ def write_atomic(path: Path, content: bytes):
     tmp.write_bytes(content)
     tmp.rename(path)
 
-def stream_download(url: str, dest: Path, session: requests.Session):
+def stream_download(url: str, dest: Path, session: requests.Session) -> Path | None:
     if dest.exists():
-        return False         # already present
+        return None
     with session.get(url, stream=True, timeout=TIMEOUT) as r:
         r.raise_for_status()
         total = int(r.headers.get("content-length", 0))
@@ -67,19 +69,35 @@ def stream_download(url: str, dest: Path, session: requests.Session):
                 f.write(chunk)
                 bar.update(len(chunk))
     dest.with_suffix(".part").rename(dest)
-    return True
+    return dest
 
 # ------------------------------------------------------------------ SCRAPER IMPLEMENTATIONS
 def scrape_trip(dest_dir: Path, session: requests.Session):
-    html   = session.get(DATA_PAGE, timeout=TIMEOUT).text
-    soup   = BeautifulSoup(html, "html.parser")
-    links  = {urljoin(DATA_PAGE, a["href"]) for a in soup.select("a[href]")
-              if ZIP_RE.search(a["href"])}
-    fresh = 0
+    html = session.get(DATA_PAGE, timeout=TIMEOUT).text
+    soup = BeautifulSoup(html, "html.parser")
+    links = {urljoin(DATA_PAGE, a["href"]) for a in soup.select("a[href]")
+             if ZIP_RE.search(a["href"])}
+
+    extracted, skipped = 0, 0
     for url in sorted(links, reverse=True):
-        target = dest_dir / os.path.basename(url)
-        fresh += stream_download(url, target, session)
-    print(f"Trip-data: {fresh} new file(s)")
+        zip_path = stream_download(url, dest_dir / os.path.basename(url), session)
+        if not zip_path:
+            skipped += 1
+            continue
+
+        with zipfile.ZipFile(zip_path) as zf:
+            for m in zf.infolist():
+                if m.is_dir():
+                    continue
+                dst_file = dest_dir / Path(m.filename).name
+                if dst_file.exists():
+                    continue
+                with zf.open(m) as src, open(dst_file, "wb") as out:
+                    shutil.copyfileobj(src, out)
+        zip_path.unlink()
+        extracted += 1
+
+    print(f"Trip-data: {extracted} new archive(s) extracted, {skipped} already present")
 
 def scrape_station(dest_dir: Path, session: requests.Session):
     soup = _get_data_page(session)
@@ -109,8 +127,10 @@ def scrape_geojson(dest_dir: Path, session: requests.Session):
     target = dest_dir / f"stations_{ts_utc}.json"
     r = session.get(geo_url, timeout=TIMEOUT)
     r.raise_for_status()
-    json.loads(r.text)
-    write_atomic(target, r.content)
+
+    data = json.loads(r.text)
+    pretty = json.dumps(data, indent=2).encode()
+    write_atomic(target, pretty)
     print("GeoJSON snapshot:", target.name)
 
 # ------------------------------------------------------------------ MAIN LOOP
