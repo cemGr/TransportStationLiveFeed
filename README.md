@@ -98,6 +98,20 @@ ORDER BY
 LIMIT 5;
 ```
 
+### Python helper
+The `src/db` package provides a small helper to execute the same k-NN query
+directly from Python:
+
+```python
+from src.db import query_nearest_stations
+
+stations = query_nearest_stations(latitude=52.52, longitude=13.4, k=5)
+for row in stations:
+    print(row["station_id"], row["distance_m"])
+```
+
+The package also exposes a `Database` context manager for more advanced usage.
+
 ## Pytest
 
 ```bash

@@ -16,3 +16,4 @@ pyproj
 
 #Datastructures
 rtree
+psycopg2-binary
