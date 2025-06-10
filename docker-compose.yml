@@ -28,6 +28,22 @@ services:
     volumes:
       - pgadmindata:/var/lib/pgadmin
 
+  scraper:
+    build: .
+    container_name: scraper
+    command: >
+      python src/scraper/scraper.py --kind geojson --dir ./scraper_data/live --interval 60
+    volumes:
+      - ./scraper_data:/app/scraper_data
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: radverkehr
+      PGPASSWORD: passwort123
+      PGDATABASE: radstationen
+    depends_on:
+      - db
+
 volumes:
   pgdata:
   pgadmindata:
