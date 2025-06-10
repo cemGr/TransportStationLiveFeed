@@ -2,9 +2,8 @@ import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
-# allow running this page directly
-sys.path.append(str(Path(__file__).resolve().parents[2]))
 
+# allow running this page directly
 from pathlib import Path
 import sys
 sys.path.append(str(Path(__file__).resolve().parents[2]))
@@ -19,11 +18,9 @@ def load_stations():
 
 st.title("🚏 Nächste Stationen finden")
 
-
 if "nearest" not in st.session_state:
     st.session_state["nearest"] = None
     st.session_state["user_loc"] = None
-
 
 with st.form("knn_form"):
     lat = st.number_input("Latitude", value=34.05, format="%.5f")
@@ -41,7 +38,10 @@ if st.session_state["nearest"] is not None:
     lat, lon = st.session_state["user_loc"]
     nearest = st.session_state["nearest"]
 
+
+
     nearest = find_k_nearest_stations(stations, lat, lon, int(k))
+
 
 
     m = folium.Map(location=[lat, lon], zoom_start=13)
