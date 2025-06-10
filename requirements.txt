@@ -3,6 +3,8 @@ pytest
 
 #UI
 streamlit
+streamlit-folium
+folium
 
 #sraper
 requests>=2.31
