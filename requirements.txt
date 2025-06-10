@@ -3,6 +3,8 @@ pytest
 
 #UI
 streamlit
+streamlit-folium
+folium
 
 #sraper
 requests>=2.31
@@ -11,5 +13,9 @@ tqdm>=4.66
 
 # GeoDataProcessing
 geopandas
+pandas
 pyproj
 
+#Datastructures
+rtree
+psycopg2-binary

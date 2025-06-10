@@ -67,10 +67,91 @@ python src/scraper/scraper.py \
 
 ## Docker
 
+1. **Build the image**  
+   ```bash
+   docker build -t transport-app .
+   ```
+
+2. **Run the container**  
+   ```bash
+   docker run --rm -p 8501:8501 transport-app
+   ```
+
+---
+
+## Postgres
+
+### 1. Start the container  
 ```bash
-docker build -t transport-app .
-docker run --rm -p 8501:8501 transport-app
+docker compose up -d
 ```
+
+### 2. Connect to the database  
+```bash
+docker exec -it pg_postgis psql -U radverkehr -d radstationen
+```
+
+### 3. Check table overview and structure  
+- **List all tables**  
+  ```sql
+  \dt public.*
+  ```
+- **Show structure of the `stations` table**  
+  ```sql
+  \d public.stations
+  ```
+
+### 4. Example query: List all stations  
+```sql
+SELECT
+  station_id,
+  name,
+  num_bikes,
+  num_docks,
+  online
+FROM public.stations
+ORDER BY station_id;
+```
+
+### 5. k-NN query: Find nearest stations with bikes and `online = TRUE`  
+```sql
+WITH user_location AS (
+  SELECT
+    ST_SetSRID(
+      ST_MakePoint(13.4000, 52.5200),
+      4326
+    )::GEOGRAPHY AS geom
+)
+SELECT
+  s.station_id,
+  s.name,
+  s.num_bikes,
+  s.num_docks,
+  s.online,
+  ST_Distance(s.geom, u.geom) AS distance_m
+FROM public.stations AS s
+CROSS JOIN user_location AS u
+WHERE
+  s.num_bikes > 0
+  AND s.online = TRUE          -- Only stations that are online
+ORDER BY
+  s.geom <-> u.geom            -- k-NN search via GiST / R-Tree
+LIMIT 5;
+```
+
+### Python helper
+The `src/db` package provides a small helper to execute the same k-NN query
+directly from Python:
+
+```python
+from src.db import query_nearest_stations
+
+stations = query_nearest_stations(latitude=52.52, longitude=13.4, k=5)
+for row in stations:
+    print(row["station_id"], row["distance_m"])
+```
+
+The package also exposes a `Database` context manager for more advanced usage.
 
 ## Pytest
 
