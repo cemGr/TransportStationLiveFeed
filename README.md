@@ -74,10 +74,22 @@ station data into the database.
    docker build -t transport-app .
    ```
 
-2. **Run the container**  
+2. **Run the container**
    ```bash
    docker run --rm -p 8501:8501 transport-app
    ```
+
+### Scraper via Docker
+
+To execute the live scraper inside a container and write the data to
+`./scraper_data`, use docker compose:
+
+```bash
+docker compose up scraper
+```
+
+The scraper will fetch the GeoJSON feed every minute and automatically
+upsert the station data into the PostgreSQL database.
 
 ---
 
