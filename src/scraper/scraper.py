@@ -148,7 +148,7 @@ def scrape_station(dest_dir: Path, session: requests.Session):
         write_atomic(target, r.content)
         print("Station table saved:", target.name)
 
-    #  run cleaner immediately
+    #  run cleaner immediately sollte hier es in der db gespeichert werden?
     clean_station_csv(target, STATIC_DIR)
 
 def scrape_geojson(dest_dir: Path, session: requests.Session):
