@@ -3,6 +3,10 @@ import pandas as pd
 import folium
 from streamlit_folium import st_folium
 
+# allow running this page directly
+from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).resolve().parents[2]))
 from src.datastructure.rtree import find_k_nearest_stations
 
 @st.cache_data
@@ -26,12 +30,19 @@ with st.form("knn_form"):
 
 if submitted:
     stations = load_stations()
+
     st.session_state["nearest"] = find_k_nearest_stations(stations, lat, lon, int(k))
     st.session_state["user_loc"] = (lat, lon)
 
 if st.session_state["nearest"] is not None:
     lat, lon = st.session_state["user_loc"]
     nearest = st.session_state["nearest"]
+
+
+
+    nearest = find_k_nearest_stations(stations, lat, lon, int(k))
+
+
 
     m = folium.Map(location=[lat, lon], zoom_start=13)
     folium.Marker([lat, lon], tooltip="Start").add_to(m)
