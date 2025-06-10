@@ -1,20 +1,29 @@
+import sys
+from pathlib import Path
+
 import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
 
-# allow running this page directly
-from pathlib import Path
-import sys
-sys.path.append(str(Path(__file__).resolve().parents[2]))
+# Ensure the repository root is on the Python path so the src package resolves
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.append(str(REPO_ROOT))
+
 from src.datastructure.rtree import find_k_nearest_stations
 
 @st.cache_data
-def load_stations():
-    df = pd.read_csv("jupyter/cleaned_station_data.csv")
+def load_stations() -> pd.DataFrame:
+    data_path = REPO_ROOT / "jupyter" / "cleaned_station_data.csv"
+    df = pd.read_csv(data_path)
     df = df.rename(columns={"Kiosk Name": "StationName", "Latitude": "start_lat", "Longitude": "start_long"})
     df = df[df["Status"] == "Active"].reset_index(drop=True)
     return df[["StationName", "start_lat", "start_long"]]
+
+# Stationsdaten einmalig laden, damit sie bei der Formularverarbeitung
+# sofort verfügbar sind.
+stations_df = load_stations()
 
 st.title("🚏 Nächste Stationen finden")
 
@@ -29,20 +38,12 @@ with st.form("knn_form"):
     submitted = st.form_submit_button("Suche")
 
 if submitted:
-    stations = load_stations()
-
-    st.session_state["nearest"] = find_k_nearest_stations(stations, lat, lon, int(k))
+    st.session_state["nearest"] = find_k_nearest_stations(stations_df, lat, lon, int(k))
     st.session_state["user_loc"] = (lat, lon)
 
 if st.session_state["nearest"] is not None:
     lat, lon = st.session_state["user_loc"]
     nearest = st.session_state["nearest"]
-
-
-
-    nearest = find_k_nearest_stations(stations, lat, lon, int(k))
-
-
 
     m = folium.Map(location=[lat, lon], zoom_start=13)
     folium.Marker([lat, lon], tooltip="Start").add_to(m)
