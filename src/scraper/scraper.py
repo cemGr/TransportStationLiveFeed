@@ -22,6 +22,8 @@ from tqdm import tqdm
 from pathlib import Path
 
 from src.data_processor.data_processor import clean_trip_csv, clean_station_csv
+from src.db.connection import open_connection
+from src.db.loaders import upsert_stations_from_json
 
 
 # ------------------------------------------------------------------ ENUM & CONFIG
@@ -165,6 +167,11 @@ def scrape_geojson(dest_dir: Path, session: requests.Session):
     pretty = json.dumps(data, indent=2).encode()
     write_atomic(target, pretty)
     print("GeoJSON snapshot:", target.name)
+    conn = open_connection()
+    try:
+        upsert_stations_from_json(target, conn)
+    finally:
+        conn.close()
 
 # ------------------------------------------------------------------ MAIN LOOP
 SCRAPER_MAP = {
