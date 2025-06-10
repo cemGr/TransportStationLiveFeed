@@ -62,8 +62,10 @@ python src/scraper/scraper.py \
   --kind geojson \
   --dir  ./scraper_data/live \
   --interval 60
-  
+
 ```
+Running the geojson scraper not only saves the snapshot but also upserts the
+station data into the database.
 
 ## Docker
 
