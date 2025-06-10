@@ -32,7 +32,7 @@ services:
     build: .
     container_name: scraper
     command: >
-      python src/scraper/scraper.py --kind geojson --dir ./scraper_data/live --interval 60
+      python -m src.scraper.scraper --kind geojson --dir ./scraper_data/live --interval 60
     volumes:
       - ./scraper_data:/app/scraper_data
     environment:
