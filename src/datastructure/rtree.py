@@ -35,8 +35,8 @@ def find_k_nearest_stations(
     Returns
     -------
     pd.DataFrame
-        DataFrame mit den Spalten ['StationName', 'distance'],
-        sortiert nach aufsteigender Entfernung in Metern.
+        DataFrame mit den Spalten ['StationName', 'start_lat', 'start_long',
+        'distance'], sortiert nach aufsteigender Entfernung in Metern.
     """
     # 1) GeoDataFrame erstellen und ins metrische CRS transformieren
     gdf_m = (
@@ -53,6 +53,8 @@ def find_k_nearest_stations(
     # 2) Listen für STRtree und Namen
     geoms = list(gdf_m.geometry)
     names = list(gdf_m["StationName"])
+    lats = list(stations_df["start_lat"])
+    longs = list(stations_df["start_long"])
 
     # 3) Eingabepunkt in dieselbe Projektion
     inp = (
@@ -71,14 +73,18 @@ def find_k_nearest_stations(
             idx = int(np.array(idx).flat[0])
         else:
             idx = int(idx)
-        nearest.append((geoms[idx], names[idx]))
+        nearest.append((geoms[idx], names[idx], lats[idx], longs[idx]))
         # diese Station herausnehmen
         geoms.pop(idx)
         names.pop(idx)
+        lats.pop(idx)
+        longs.pop(idx)
 
     # 5) Ergebnis-DataFrame zusammenbauen
     result = pd.DataFrame({
-        "StationName": [name for _, name in nearest],
-        "distance":    [geom.distance(inp) for geom, _ in nearest]
+        "StationName": [name for _, name, _, _ in nearest],
+        "start_lat": [lat for _, _, lat, _ in nearest],
+        "start_long": [lon for _, _, _, lon in nearest],
+        "distance":    [geom.distance(inp) for geom, _, _, _ in nearest]
     })
     return result
