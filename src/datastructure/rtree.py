@@ -35,8 +35,8 @@ def find_k_nearest_stations(
     Returns
     -------
     pd.DataFrame
-        DataFrame mit den Spalten ['StationName', 'distance'],
-        sortiert nach aufsteigender Entfernung in Metern.
+        DataFrame mit den Spalten ['StationName', 'start_lat', 'start_long',
+        'distance'], sortiert nach aufsteigender Entfernung in Metern.
     """
     # 1) GeoDataFrame erstellen und ins metrische CRS transformieren
     gdf_m = (
