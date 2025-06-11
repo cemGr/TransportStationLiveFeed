@@ -174,6 +174,17 @@ pytest -q
 
 ```
 
+### Run tests in Docker
+
+You can also execute the test suite inside a container:
+
+```bash
+docker build -t transport-station-feed-test .
+docker run --rm -v "$PWD":/app -w /app transport-station-feed-test pytest -q
+```
+
+The CI pipeline runs these commands automatically.
+
 ## Want to add a new Page?
 ```
 create a python file in the src/page folder. It will be automatical added to the ui. 
