@@ -25,8 +25,13 @@ with st.form("dock_search"):
     submitted = st.form_submit_button("Suchen")
 
 if submitted:
-    st.session_state["nearest_docks"] = query_nearest_docks(latitude=lat, longitude=lon, k=int(k))
-    st.session_state["user_loc"] = (lat, lon)
+    try:
+        st.session_state["nearest_docks"] = query_nearest_docks(
+            latitude=lat, longitude=lon, k=int(k)
+        )
+        st.session_state["user_loc"] = (lat, lon)
+    except Exception as e:  # pragma: no cover - UI feedback
+        st.error(f"Datenbankverbindung fehlgeschlagen: {e}")
 
 if st.session_state["nearest_docks"]:
     lat, lon = st.session_state["user_loc"]
