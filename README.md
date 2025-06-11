@@ -56,8 +56,14 @@ python src/scraper/scraper.py \
   --dir  ./scraper_data/static
 
 ```
-> **Note** – Run the station scraper at least once before the trip scraper so
-> that cleaned station data is available.
+
+> **Note** – Trip cleaning relies on `processed_data/static/cleaned_station_data.csv`.
+> Run the station scraper once before the trip scraper, e.g. with Docker:
+> ```bash
+> docker compose run --rm scraper \
+>   python -m src.scraper.scraper --kind station --dir ./scraper_data/static
+> ```
+
 ```bash
 
 python src/scraper/scraper.py \
@@ -89,6 +95,12 @@ To execute the live scraper inside a container and write the data to
 ```bash
 docker compose up scraper
 docker compose run --rm trip_scraper
+```
+
+If you modify the scraper code, rebuild the container so changes are picked up:
+
+```bash
+docker compose build trip_scraper
 ```
 
 The scraper will fetch the GeoJSON feed every minute and automatically

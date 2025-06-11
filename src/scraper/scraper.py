@@ -103,7 +103,23 @@ def extract_trip_zip(dest_dir, zip_path):
     STATION_RE = re.compile(r"metro-bike-share-stations-\d{4}-\d{2}-\d{2}\.csv$", re.I)
 
     with zipfile.ZipFile(zip_path) as zf:
-        for m in zf.infolist():
+        members = zf.infolist()
+
+        # first handle any station tables so trip cleaning succeeds
+        for m in members:
+            if m.is_dir():
+                continue
+            name = Path(m.filename).name
+            if STATION_RE.match(name):
+                if m.filename.startswith("__MACOSX/") or name.startswith("._"):
+                    continue
+                station_raw = STATIC_DIR / name
+                if not station_raw.exists():
+                    with zf.open(m) as src, open(station_raw, "wb") as out:
+                        shutil.copyfileobj(src, out)
+                clean_station_csv(station_raw, STATIC_DIR)
+
+        for m in members:
             if m.is_dir():
                 continue
 
@@ -111,13 +127,9 @@ def extract_trip_zip(dest_dir, zip_path):
             if m.filename.startswith("__MACOSX/") or Path(m.filename).name.startswith("._"):
                 continue
 
-            # Unique case only in some zips
             name = Path(m.filename).name
             if STATION_RE.match(name):
-                station_raw = STATIC_DIR / name
-                if not station_raw.exists():
-                    with zf.open(m) as src, open(station_raw, "wb") as out:
-                        shutil.copyfileobj(src, out)
+                # already processed above
                 continue
 
             dst_file = dest_dir / Path(m.filename).name
@@ -127,15 +139,17 @@ def extract_trip_zip(dest_dir, zip_path):
                 shutil.copyfileobj(src, out)
 
             # run cleaner immediately if station data is available
-            station_files = list(STATIC_DIR.glob("cleaned_station_data.csv"))
-            if not station_files:
+
+            station_csv = STATIC_DIR / "cleaned_station_data.csv"
+            if not station_csv.exists():
+
                 print(
                     "Warning: cleaned station data missing; "
                     "run the station scraper first"
                 )
             else:
-                latest_station = max(station_files)
-                cleaned = clean_trip_csv(dst_file, latest_station, TRIP_DIR)
+                cleaned = clean_trip_csv(dst_file, station_csv, TRIP_DIR)
+
                 if cleaned:
                     conn = open_connection()
                     try:
