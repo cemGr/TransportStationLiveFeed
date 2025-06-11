@@ -117,7 +117,10 @@ def extract_trip_zip(dest_dir, zip_path):
                 if not station_raw.exists():
                     with zf.open(m) as src, open(station_raw, "wb") as out:
                         shutil.copyfileobj(src, out)
-                clean_station_csv(station_raw, STATIC_DIR)
+                try:
+                    clean_station_csv(station_raw, STATIC_DIR)
+                except Exception as exc:
+                    print(f"Warning: failed to clean station data {name}: {exc}")
 
         for m in members:
             if m.is_dir():
@@ -148,7 +151,11 @@ def extract_trip_zip(dest_dir, zip_path):
                     "run the station scraper first"
                 )
             else:
-                cleaned = clean_trip_csv(dst_file, station_csv, TRIP_DIR)
+                try:
+                    cleaned = clean_trip_csv(dst_file, station_csv, TRIP_DIR)
+                except Exception as exc:
+                    print(f"Warning: failed to clean trip data {dst_file.name}: {exc}")
+                    cleaned = None
 
                 if cleaned:
                     conn = open_connection()

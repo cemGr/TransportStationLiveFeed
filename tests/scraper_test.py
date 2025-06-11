@@ -63,3 +63,35 @@ def test_extract_trip_zip_auto_cleans_station(tmp_path, monkeypatch):
 
     assert (sc.STATIC_DIR / "cleaned_station_data.csv").exists()
     assert (sc.TRIP_DIR / "trips.clean.csv").exists()
+
+
+def test_extract_trip_zip_handles_clean_errors(tmp_path, monkeypatch, capsys):
+    """A broken station table should not crash extraction."""
+    trip_csv = (
+        "duration,start_time,end_time,start_station,start_lat,start_lon," \
+        "end_station,end_lat,end_lon,bike_id,bike_type\n" \
+        "5,2024-01-01 00:00:00,2024-01-01 00:05:00,1,52.0,13.0,2,52.1,13.1,100,standard\n"
+    )
+    station_csv = "bad,data\n1,2\n"
+    zip_path = tmp_path / "broken.zip"
+    with zipfile.ZipFile(zip_path, "w") as zf:
+        zf.writestr("trips.csv", trip_csv)
+        zf.writestr("metro-bike-share-stations-2024-01-01.csv", station_csv)
+
+    dest = tmp_path / "out"
+    dest.mkdir()
+
+    import src.scraper.scraper as sc
+    sc.STATIC_DIR = tmp_path / "static"
+    sc.TRIP_DIR = tmp_path / "proc"
+    sc.STATIC_DIR.mkdir()
+    sc.TRIP_DIR.mkdir()
+
+    monkeypatch.setattr(sc, "open_connection", lambda: None)
+    monkeypatch.setattr(sc, "insert_trips_from_csv", lambda p, c: None)
+
+    extract_trip_zip(dest, zip_path)
+
+    out = capsys.readouterr().out
+    assert "failed to clean station data" in out
+    assert (dest / "trips.csv").exists()
