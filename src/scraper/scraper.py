@@ -67,6 +67,7 @@ def _first_href(soup: BeautifulSoup, text_contains: str) -> str | None:
 
 # ------------------------------------------------------------------ HELPERS
 def write_atomic(path: Path, content: bytes):
+    path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".part")
     tmp.write_bytes(content)
     tmp.rename(path)
@@ -75,6 +76,7 @@ def write_atomic(path: Path, content: bytes):
 def stream_download(url: str, dest: Path, session: requests.Session) -> Path | None:
     if dest.exists():
         return None
+    dest.parent.mkdir(parents=True, exist_ok=True)
     with session.get(url, stream=True, timeout=TIMEOUT) as r:
         r.raise_for_status()
         total = int(r.headers.get("content-length", 0))
@@ -190,6 +192,7 @@ def extract_trip_zip(dest_dir, zip_path):
 
 
 def scrape_station(dest_dir: Path, session: requests.Session):
+    dest_dir.mkdir(parents=True, exist_ok=True)
     soup = _get_data_page(session)
     csv_url = _first_href(soup, "Station Table")
     if not csv_url:

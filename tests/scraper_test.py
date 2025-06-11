@@ -129,3 +129,42 @@ def test_scrape_trip_fetches_station_when_missing(tmp_path, monkeypatch):
     sc.scrape_trip(tmp_path / "raw", DummySess())
 
     assert calls and calls[0] == tmp_path / "static"
+
+
+def test_scrape_station_creates_dest_dir(tmp_path, monkeypatch):
+    import src.scraper.scraper as sc
+
+    sc.STATIC_DIR = tmp_path / "processed" / "static"
+    sc.TRIP_DIR = tmp_path / "processed" / "trip"
+    sc.STATIC_DIR.mkdir(parents=True)
+    sc.TRIP_DIR.mkdir(parents=True)
+
+    dest = tmp_path / "raw" / "static"
+
+    from bs4 import BeautifulSoup
+
+    monkeypatch.setattr(
+        sc,
+        "_get_data_page",
+        lambda s: BeautifulSoup('<a href="station.csv">Station Table</a>', "html.parser"),
+    )
+
+    class DummyResp:
+        def __init__(self, content=b"id,name\n1,one\n"):
+            self.content = content
+            self.text = content.decode()
+
+        def raise_for_status(self):
+            pass
+
+    class DummySess:
+        def get(self, url, *a, **k):
+            return DummyResp()
+
+    calls = []
+    monkeypatch.setattr(sc, "clean_station_csv", lambda src, d: calls.append(src))
+
+    sc.scrape_station(dest, DummySess())
+
+    assert (dest / "station.csv").exists()
+    assert calls
