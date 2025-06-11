@@ -126,15 +126,22 @@ def extract_trip_zip(dest_dir, zip_path):
             with zf.open(m) as src, open(dst_file, "wb") as out:
                 shutil.copyfileobj(src, out)
 
-            # run cleaner immediately
-            latest_station = max(STATIC_DIR.glob("cleaned_station_data.csv"))
-            cleaned = clean_trip_csv(dst_file, latest_station, TRIP_DIR)
-            if cleaned:
-                conn = open_connection()
-                try:
-                    insert_trips_from_csv(cleaned, conn)
-                finally:
-                    conn.close()
+            # run cleaner immediately if station data is available
+            station_files = list(STATIC_DIR.glob("cleaned_station_data.csv"))
+            if not station_files:
+                print(
+                    "Warning: cleaned station data missing; "
+                    "run the station scraper first"
+                )
+            else:
+                latest_station = max(station_files)
+                cleaned = clean_trip_csv(dst_file, latest_station, TRIP_DIR)
+                if cleaned:
+                    conn = open_connection()
+                    try:
+                        insert_trips_from_csv(cleaned, conn)
+                    finally:
+                        conn.close()
 
 
 def scrape_station(dest_dir: Path, session: requests.Session):

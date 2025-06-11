@@ -54,8 +54,10 @@ python src/scraper/scraper.py \
 python src/scraper/scraper.py \
   --kind station \
   --dir  ./scraper_data/static
-  
+
 ```
+> **Note** – Run the station scraper at least once before the trip scraper so
+> that cleaned station data is available.
 ```bash
 
 python src/scraper/scraper.py \
