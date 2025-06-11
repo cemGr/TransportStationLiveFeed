@@ -1,5 +1,6 @@
 from .connection import open_connection
 from .queries import nearest_stations
+from .loaders import insert_trips_from_csv, upsert_stations_from_json
 
 
 class Database:

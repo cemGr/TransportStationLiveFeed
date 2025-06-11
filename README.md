@@ -86,6 +86,7 @@ To execute the live scraper inside a container and write the data to
 
 ```bash
 docker compose up scraper
+docker compose run --rm trip_scraper
 ```
 
 The scraper will fetch the GeoJSON feed every minute and automatically
