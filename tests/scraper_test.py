@@ -63,4 +63,3 @@ def test_extract_trip_zip_auto_cleans_station(tmp_path, monkeypatch):
 
     assert (sc.STATIC_DIR / "cleaned_station_data.csv").exists()
     assert (sc.TRIP_DIR / "trips.clean.csv").exists()
-

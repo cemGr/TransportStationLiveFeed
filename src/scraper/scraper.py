@@ -139,14 +139,17 @@ def extract_trip_zip(dest_dir, zip_path):
                 shutil.copyfileobj(src, out)
 
             # run cleaner immediately if station data is available
+
             station_csv = STATIC_DIR / "cleaned_station_data.csv"
             if not station_csv.exists():
+
                 print(
                     "Warning: cleaned station data missing; "
                     "run the station scraper first"
                 )
             else:
                 cleaned = clean_trip_csv(dst_file, station_csv, TRIP_DIR)
+
                 if cleaned:
                     conn = open_connection()
                     try:

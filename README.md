@@ -56,12 +56,14 @@ python src/scraper/scraper.py \
   --dir  ./scraper_data/static
 
 ```
+
 > **Note** – Trip cleaning relies on `processed_data/static/cleaned_station_data.csv`.
 > Run the station scraper once before the trip scraper, e.g. with Docker:
 > ```bash
 > docker compose run --rm scraper \
 >   python -m src.scraper.scraper --kind station --dir ./scraper_data/static
 > ```
+
 ```bash
 
 python src/scraper/scraper.py \
