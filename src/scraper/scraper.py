@@ -23,7 +23,7 @@ from pathlib import Path
 
 from src.data_processor.data_processor import clean_trip_csv, clean_station_csv
 from src.db.connection import open_connection
-from src.db.loaders import upsert_stations_from_json
+from src.db.loaders import upsert_stations_from_json, insert_trips_from_csv
 
 
 # ------------------------------------------------------------------ ENUM & CONFIG
@@ -128,7 +128,13 @@ def extract_trip_zip(dest_dir, zip_path):
 
             # run cleaner immediately
             latest_station = max(STATIC_DIR.glob("cleaned_station_data.csv"))
-            clean_trip_csv(dst_file, latest_station, TRIP_DIR)
+            cleaned = clean_trip_csv(dst_file, latest_station, TRIP_DIR)
+            if cleaned:
+                conn = open_connection()
+                try:
+                    insert_trips_from_csv(cleaned, conn)
+                finally:
+                    conn.close()
 
 
 def scrape_station(dest_dir: Path, session: requests.Session):

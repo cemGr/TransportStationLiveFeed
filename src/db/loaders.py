@@ -1,4 +1,5 @@
 import json
+import csv
 from pathlib import Path
 
 
@@ -45,6 +46,52 @@ def upsert_stations_from_json(path: Path, conn):
                     online,
                     lon,
                     lat,
+                ),
+            )
+        conn.commit()
+
+
+def insert_trips_from_csv(path: Path, conn):
+    """Insert cleaned trip CSV rows into the database."""
+
+    sql = """
+        INSERT INTO public.trips (
+            duration,
+            start_time,
+            end_time,
+            start_station,
+            start_lat,
+            start_lon,
+            end_station,
+            end_lat,
+            end_lon,
+            bike_id,
+            bike_type
+        ) VALUES (
+            %s, %s, %s,
+            %s, %s, %s,
+            %s, %s, %s,
+            %s, %s
+        );
+    """
+
+    with conn.cursor() as cur, open(path, newline="") as f:
+        reader = csv.DictReader(f)
+        for row in reader:
+            cur.execute(
+                sql,
+                (
+                    int(row.get("duration", 0)),
+                    row.get("start_time"),
+                    row.get("end_time"),
+                    int(row.get("start_station", 0)),
+                    float(row.get("start_lat", 0.0)),
+                    float(row.get("start_lon", 0.0)),
+                    int(row.get("end_station", 0)),
+                    float(row.get("end_lat", 0.0)),
+                    float(row.get("end_lon", 0.0)),
+                    int(row.get("bike_id", 0)),
+                    row.get("bike_type"),
                 ),
             )
         conn.commit()
