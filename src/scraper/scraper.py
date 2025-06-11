@@ -12,6 +12,7 @@ python src/scraper/scraper.py --kind station --dir ./scraper_data/static
 # GeoJSON (live status), every minute in a while-loop
 python src/scraper/scraper.py --kind geojson --dir ./scraper_data/live --interval 60
 """
+
 from __future__ import annotations
 import argparse, time, os, re, sys, json, requests
 import shutil
@@ -32,16 +33,17 @@ from src.db.loaders import upsert_stations_from_json, insert_trips_from_csv
 
 # ------------------------------------------------------------------ ENUM & CONFIG
 class Kind(Enum):
-    trip     = "trip"
-    station  = "station"
-    geojson  = "geojson"
+    trip = "trip"
+    station = "station"
+    geojson = "geojson"
 
-DATA_PAGE       = "https://bikeshare.metro.net/about/data/"
-STATION_URL    = "https://bikeshare.metro.net/static/station_table.csv"
-GEOJSON_URL    = "https://bikeshare.metro.net/stations/stations.geojson"
-ZIP_RE         = re.compile(r"\btrips?.*\.zip$", re.I)
-UA             = "MetroScraper/1.0"
-TIMEOUT        = 30
+
+DATA_PAGE = "https://bikeshare.metro.net/about/data/"
+STATION_URL = "https://bikeshare.metro.net/static/station_table.csv"
+GEOJSON_URL = "https://bikeshare.metro.net/stations/stations.geojson"
+ZIP_RE = re.compile(r"\btrips?.*\.zip$", re.I)
+UA = "MetroScraper/1.0"
+TIMEOUT = 30
 
 HEADERS_BROWSER = {
     "User-Agent": UA,
@@ -51,19 +53,24 @@ HEADERS_BROWSER = {
 from bs4 import BeautifulSoup
 from urllib.parse import urljoin
 
+
 def _get_data_page(session: requests.Session) -> BeautifulSoup:
     html = session.get(DATA_PAGE, headers=HEADERS_BROWSER, timeout=TIMEOUT).text
     return BeautifulSoup(html, "html.parser")
+
 
 def _first_href(soup: BeautifulSoup, text_contains: str) -> str | None:
     """Return absolute href whose link-text contains the phrase (case-insensitive)."""
     link = soup.find("a", string=lambda t: t and text_contains.lower() in t.lower())
     return urljoin(DATA_PAGE, link["href"]) if link else None
+
+
 # ------------------------------------------------------------------ HELPERS
 def write_atomic(path: Path, content: bytes):
     tmp = path.with_suffix(".part")
     tmp.write_bytes(content)
     tmp.rename(path)
+
 
 def stream_download(url: str, dest: Path, session: requests.Session) -> Path | None:
     if dest.exists():
@@ -71,22 +78,33 @@ def stream_download(url: str, dest: Path, session: requests.Session) -> Path | N
     with session.get(url, stream=True, timeout=TIMEOUT) as r:
         r.raise_for_status()
         total = int(r.headers.get("content-length", 0))
-        with tqdm(total=total, unit="B", unit_scale=True,
-                  desc=dest.name) as bar, \
-             open(dest.with_suffix(".part"), "wb") as f:
+        with tqdm(total=total, unit="B", unit_scale=True, desc=dest.name) as bar, open(
+            dest.with_suffix(".part"), "wb"
+        ) as f:
             for chunk in r.iter_content(1 << 15):
                 f.write(chunk)
                 bar.update(len(chunk))
     dest.with_suffix(".part").rename(dest)
     return dest
 
+
 # ------------------------------------------------------------------ SCRAPER IMPLEMENTATIONS
 
+
 def scrape_trip(dest_dir: Path, session: requests.Session):
+    """Download and clean quarterly trip data."""
+    station_csv = STATIC_DIR / "cleaned_station_data.csv"
+    if not station_csv.exists():
+        raw_static = dest_dir.parent / "static"
+        scrape_station(raw_static, session)
+
     html = session.get(DATA_PAGE, timeout=TIMEOUT).text
     soup = BeautifulSoup(html, "html.parser")
-    links = {urljoin(DATA_PAGE, a["href"]) for a in soup.select("a[href]")
-             if ZIP_RE.search(a["href"])}
+    links = {
+        urljoin(DATA_PAGE, a["href"])
+        for a in soup.select("a[href]")
+        if ZIP_RE.search(a["href"])
+    }
 
     extracted, skipped = 0, 0
     for url in sorted(links, reverse=True):
@@ -131,7 +149,9 @@ def extract_trip_zip(dest_dir, zip_path):
                 continue
 
             # Unique case only in some zips
-            if m.filename.startswith("__MACOSX/") or Path(m.filename).name.startswith("._"):
+            if m.filename.startswith("__MACOSX/") or Path(m.filename).name.startswith(
+                "._"
+            ):
                 continue
 
             name = Path(m.filename).name
@@ -189,6 +209,7 @@ def scrape_station(dest_dir: Path, session: requests.Session):
     #  run cleaner immediately sollte hier es in der db gespeichert werden?
     clean_station_csv(target, STATIC_DIR)
 
+
 def scrape_geojson(dest_dir: Path, session: requests.Session):
     soup = _get_data_page(session)
     geo_url = _first_href(soup, "GeoJSON")
@@ -211,12 +232,14 @@ def scrape_geojson(dest_dir: Path, session: requests.Session):
     finally:
         conn.close()
 
+
 # ------------------------------------------------------------------ MAIN LOOP
 SCRAPER_MAP = {
-    Kind.trip:     scrape_trip,
-    Kind.station:  scrape_station,
-    Kind.geojson:  scrape_geojson,
+    Kind.trip: scrape_trip,
+    Kind.station: scrape_station,
+    Kind.geojson: scrape_geojson,
 }
+
 
 def run_once(kind: Kind, dest: Path):
     dest.mkdir(parents=True, exist_ok=True)
@@ -224,21 +247,32 @@ def run_once(kind: Kind, dest: Path):
         sess.headers["User-Agent"] = UA
         SCRAPER_MAP[kind](dest, sess)
 
+
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("-k", "--kind", required=True,
-                    choices=[k.value for k in Kind],
-                    help="trip | station | geojson")
-    ap.add_argument("-d", "--dir", required=True,
-                    help="destination directory for downloaded files")
-    ap.add_argument("-i", "--interval", type=int, default=0,
-                    help="seconds between runs (0 = run once and exit)")
+    ap.add_argument(
+        "-k",
+        "--kind",
+        required=True,
+        choices=[k.value for k in Kind],
+        help="trip | station | geojson",
+    )
+    ap.add_argument(
+        "-d", "--dir", required=True, help="destination directory for downloaded files"
+    )
+    ap.add_argument(
+        "-i",
+        "--interval",
+        type=int,
+        default=0,
+        help="seconds between runs (0 = run once and exit)",
+    )
     args = ap.parse_args()
 
     kind = Kind(args.kind)
     dest = Path(args.dir)
 
-    RAW_ROOT  = dest
+    RAW_ROOT = dest
     PROC_ROOT = RAW_ROOT.parent / "processed_data"
     global STATIC_DIR, TRIP_DIR
     STATIC_DIR = PROC_ROOT / "static"
@@ -256,6 +290,7 @@ def main():
         except Exception as exc:
             print("⚠", exc, file=sys.stderr)
         time.sleep(args.interval)
+
 
 if __name__ == "__main__":
     main()

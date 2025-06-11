@@ -18,6 +18,7 @@ def test_extract_trip_zip_warns_without_station_data(tmp_path, capsys):
 
     # setup required globals
     import src.scraper.scraper as sc
+
     sc.STATIC_DIR = tmp_path / "static"
     sc.TRIP_DIR = tmp_path / "proc"
     sc.STATIC_DIR.mkdir()
@@ -47,6 +48,7 @@ def test_extract_trip_zip_auto_cleans_station(tmp_path, monkeypatch):
     dest.mkdir()
 
     import src.scraper.scraper as sc
+
     sc.STATIC_DIR = tmp_path / "static"
     sc.TRIP_DIR = tmp_path / "proc"
     sc.STATIC_DIR.mkdir()
@@ -68,8 +70,8 @@ def test_extract_trip_zip_auto_cleans_station(tmp_path, monkeypatch):
 def test_extract_trip_zip_handles_clean_errors(tmp_path, monkeypatch, capsys):
     """A broken station table should not crash extraction."""
     trip_csv = (
-        "duration,start_time,end_time,start_station,start_lat,start_lon," \
-        "end_station,end_lat,end_lon,bike_id,bike_type\n" \
+        "duration,start_time,end_time,start_station,start_lat,start_lon,"
+        "end_station,end_lat,end_lon,bike_id,bike_type\n"
         "5,2024-01-01 00:00:00,2024-01-01 00:05:00,1,52.0,13.0,2,52.1,13.1,100,standard\n"
     )
     station_csv = "bad,data\n1,2\n"
@@ -82,6 +84,7 @@ def test_extract_trip_zip_handles_clean_errors(tmp_path, monkeypatch, capsys):
     dest.mkdir()
 
     import src.scraper.scraper as sc
+
     sc.STATIC_DIR = tmp_path / "static"
     sc.TRIP_DIR = tmp_path / "proc"
     sc.STATIC_DIR.mkdir()
@@ -95,3 +98,34 @@ def test_extract_trip_zip_handles_clean_errors(tmp_path, monkeypatch, capsys):
     out = capsys.readouterr().out
     assert "failed to clean station data" in out
     assert (dest / "trips.csv").exists()
+
+
+def test_scrape_trip_fetches_station_when_missing(tmp_path, monkeypatch):
+    """scrape_trip should call scrape_station if no cleaned station data."""
+    import src.scraper.scraper as sc
+
+    sc.STATIC_DIR = tmp_path / "processed" / "static"
+    sc.TRIP_DIR = tmp_path / "processed" / "trip"
+    sc.STATIC_DIR.mkdir(parents=True)
+    sc.TRIP_DIR.mkdir(parents=True)
+
+    calls = []
+    monkeypatch.setattr(sc, "scrape_station", lambda d, s: calls.append(d))
+    monkeypatch.setattr(sc, "extract_trip_zip", lambda d, z: None)
+
+    class DummyResp:
+        def __init__(self, text=""):
+            self.text = text
+
+        def raise_for_status(self):
+            pass
+
+    class DummySess:
+        def get(self, url, *a, **k):
+            if url == sc.DATA_PAGE:
+                return DummyResp('<a href="x.zip">x</a>')
+            return DummyResp()
+
+    sc.scrape_trip(tmp_path / "raw", DummySess())
+
+    assert calls and calls[0] == tmp_path / "static"
