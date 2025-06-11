@@ -142,6 +142,16 @@ FROM public.stations
 ORDER BY station_id;
 ```
 
+
+### 4. Example query: List all stations  
+```sql
+SELECT
+  *
+FROM public.trips
+ORDER BY id;
+```
+
+
 ### 5. k-NN query: Find nearest stations with bikes and `online = TRUE`  
 ```sql
 WITH user_location AS (
