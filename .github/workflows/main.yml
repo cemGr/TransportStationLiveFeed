@@ -26,3 +26,11 @@ jobs:
       - name: Run tests
         run: |
           pytest
+
+      - name: Build Docker image
+        run: |
+          docker build -t transport-station-feed-test .
+
+      - name: Run tests inside Docker
+        run: |
+          docker run --rm -v ${{ github.workspace }}:/app -w /app transport-station-feed-test pytest -q

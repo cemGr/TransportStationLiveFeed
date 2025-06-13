@@ -8,3 +8,18 @@ CREATE TABLE public.stations (
   online       BOOLEAN NOT NULL,                     -- NEUE SPALTE
   geom         GEOGRAPHY(Point, 4326)
 );
+
+CREATE TABLE public.trips (
+  id            SERIAL PRIMARY KEY,
+  duration      INTEGER,
+  start_time    TIMESTAMP,
+  end_time      TIMESTAMP,
+  start_station INTEGER,
+  start_lat     DOUBLE PRECISION,
+  start_lon     DOUBLE PRECISION,
+  end_station   INTEGER,
+  end_lat       DOUBLE PRECISION,
+  end_lon       DOUBLE PRECISION,
+  bike_id       INTEGER,
+  bike_type     TEXT
+);
