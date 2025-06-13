@@ -28,6 +28,40 @@ services:
     volumes:
       - pgadmindata:/var/lib/pgadmin
 
+  scraper:
+    build: .
+    container_name: scraper
+    command: >
+      python -m src.scraper.scraper --kind geojson --dir ./scraper_data/live --interval 60
+    volumes:
+      - ./scraper_data:/app/scraper_data
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: radverkehr
+      PGPASSWORD: passwort123
+      PGDATABASE: radstationen
+    depends_on:
+      - db
+
+  trip_scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.crawler
+    container_name: trip_scraper
+    command: >
+      python -m src.scraper.scraper --kind trip --dir ./scraper_data/trip_data
+    volumes:
+      - ./scraper_data:/app/scraper_data
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: radverkehr
+      PGPASSWORD: passwort123
+      PGDATABASE: radstationen
+    depends_on:
+      - db
+
 volumes:
   pgdata:
   pgadmindata:

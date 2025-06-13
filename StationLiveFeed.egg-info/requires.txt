@@ -1,0 +1,12 @@
+pytest
+streamlit
+streamlit-folium
+folium
+requests>=2.31
+beautifulsoup4>=4.12
+tqdm>=4.66
+geopandas
+pandas
+pyproj
+rtree
+psycopg2-binary
