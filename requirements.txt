@@ -19,3 +19,7 @@ pyproj
 #Datastructures
 rtree
 psycopg2-binary
+openmeteo-requests
+requests_cache
+retry_requests
+
