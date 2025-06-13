@@ -7,6 +7,8 @@ WITH user_location AS (
 SELECT
     s.station_id,
     s.name,
+    s.longitude,
+    s.latitude,
     s.num_bikes,
     s.num_docks,
     s.online,
@@ -26,6 +28,8 @@ WITH user_location AS (
 SELECT
     s.station_id,
     s.name,
+    s.longitude,
+    s.latitude,
     s.num_bikes,
     s.num_docks,
     s.online,

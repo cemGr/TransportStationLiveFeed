@@ -110,10 +110,13 @@ upsert the station data into the PostgreSQL database.
 
 ## Postgres
 
-### 1. Start the container  
+### 1. Start the container
 ```bash
 docker compose up -d
 ```
+After the database is running, the Streamlit UI will be able to connect via the
+default credentials. If you see a message like `Datenbankverbindung
+fehlgeschlagen`, ensure this container is running and accessible on port `5432`.
 
 ### 2. Connect to the database  
 ```bash
