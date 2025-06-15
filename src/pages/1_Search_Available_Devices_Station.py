@@ -13,7 +13,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from src.db import query_nearest_stations
 
-st.title("🚲 Verfügbare Bikes in der Nähe")
+st.title("🚲 Available stations with bikes nearby")
 
 if "nearest_bikes" not in st.session_state:
     st.session_state["nearest_bikes"] = None
@@ -22,8 +22,8 @@ if "nearest_bikes" not in st.session_state:
 with st.form("bike_search"):
     lat = st.number_input("Latitude", value=34.05, format="%.5f")
     lon = st.number_input("Longitude", value=-118.25, format="%.5f")
-    k = st.number_input("Anzahl Stationen", min_value=1, value=5, step=1)
-    submitted = st.form_submit_button("Suchen")
+    k = st.number_input("Number of stations", min_value=1, value=5, step=1)
+    submitted = st.form_submit_button("search")
 
 if submitted:
     try:
@@ -40,7 +40,7 @@ if st.session_state["nearest_bikes"]:
 
     df = pd.DataFrame(result)
     df["distance_m"] = df["distance_m"].round(1)
-    st.subheader("Gefundene Stationen")
+    st.subheader("Available stations")
     st.table(df[["name", "num_bikes", "distance_m"]])
 
     m = folium.Map(location=[lat, lon], zoom_start=13)
