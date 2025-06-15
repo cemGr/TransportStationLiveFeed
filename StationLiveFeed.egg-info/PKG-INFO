@@ -1,0 +1,16 @@
+Metadata-Version: 2.4
+Name: StationLiveFeed
+Version: 0.1.0
+Requires-Dist: pytest
+Requires-Dist: streamlit
+Requires-Dist: streamlit-folium
+Requires-Dist: folium
+Requires-Dist: requests>=2.31
+Requires-Dist: beautifulsoup4>=4.12
+Requires-Dist: tqdm>=4.66
+Requires-Dist: geopandas
+Requires-Dist: pandas
+Requires-Dist: pyproj
+Requires-Dist: rtree
+Requires-Dist: psycopg2-binary
+Dynamic: requires-dist
