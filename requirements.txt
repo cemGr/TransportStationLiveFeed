@@ -5,6 +5,7 @@ pytest
 streamlit
 streamlit-folium
 folium
+openrouteservice
 
 #sraper
 requests>=2.31
