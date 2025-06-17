@@ -6,7 +6,6 @@ streamlit
 streamlit-folium
 folium
 openrouteservice
-ipywidgets
 
 #sraper
 requests>=2.31

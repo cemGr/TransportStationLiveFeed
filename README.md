@@ -223,9 +223,10 @@ create a python file in the src/page folder. It will be automatical added to the
 In `jupyter/openrouteservice_demo.ipynb` findest du ein Beispiel, das mithilfe
 von [openrouteservice](https://openrouteservice.org/) und Folium die Distanz
 und Route zwischen zwei Koordinaten sowohl zu Fuß als auch mit dem Fahrrad
-berechnet und auf einer Karte anzeigt. Um das Notebook auszuführen, musst du
-einen gültigen API-Key über die Umgebungsvariable `ORS_API_KEY` bereitstellen,
-z.B.:
+berechnet und auf einer Karte anzeigt. Die Koordinaten und die ermittelten
+Distanzen werden in einem Pandas-DataFrame gespeichert. Um das Notebook
+auszuführen, musst du einen gültigen API-Key über die Umgebungsvariable
+`ORS_API_KEY` bereitstellen, z.B.:
 
 ```bash
 export ORS_API_KEY="<dein-key>"
