@@ -90,6 +90,24 @@ def stream_download(url: str, dest: Path, session: requests.Session) -> Path | N
     return dest
 
 
+def _import_once(cleaned_path: Path) -> None:
+    """Insert trip rows once per cleaned CSV using a marker file."""
+    marker = cleaned_path.with_suffix(cleaned_path.suffix + ".imported")
+    if marker.exists():
+        return
+    conn = open_connection()
+    try:
+        insert_trips_from_csv(cleaned_path, conn)
+    finally:
+        conn.close()
+    marker.touch()
+
+
+def _import_pending_clean_files() -> None:
+    for csv in TRIP_DIR.glob("*.clean.csv"):
+        _import_once(csv)
+
+
 # ------------------------------------------------------------------ SCRAPER IMPLEMENTATIONS
 
 
@@ -99,6 +117,7 @@ def scrape_trip(dest_dir: Path, session: requests.Session):
     if not station_csv.exists():
         raw_static = dest_dir.parent / "static"
         scrape_station(raw_static, session)
+    _import_pending_clean_files()
 
     html = session.get(DATA_PAGE, timeout=TIMEOUT).text
     soup = BeautifulSoup(html, "html.parser")
@@ -110,17 +129,21 @@ def scrape_trip(dest_dir: Path, session: requests.Session):
 
     extracted, skipped = 0, 0
     for url in sorted(links, reverse=True):
-        zip_path = stream_download(url, dest_dir / os.path.basename(url), session)
+        target = dest_dir / os.path.basename(url)
+        zip_path = stream_download(url, target, session)
         if not zip_path:
             skipped += 1
-            continue
+            zip_path = target
+        else:
+            extracted += 1
 
         extract_trip_zip(dest_dir, zip_path)
+        if zip_path.exists():
+            zip_path.unlink()
 
-        zip_path.unlink()
-        extracted += 1
-
-    print(f"Trip-data: {extracted} new archive(s) extracted, {skipped} already present")
+    print(
+        f"Trip-data: {extracted} new archive(s) extracted, {skipped} already present"
+    )
 
 
 def extract_trip_zip(dest_dir, zip_path):
@@ -181,11 +204,7 @@ def extract_trip_zip(dest_dir, zip_path):
                 except Exception as exc:
                     print(f"Warning: failed to clean trip data {dst_file.name}: {exc}")
                 else:
-                    conn = open_connection()
-                    try:
-                        insert_trips_from_csv(cleaned_path, conn)
-                    finally:
-                        conn.close()
+                    _import_once(cleaned_path)
 
 
 def scrape_station(dest_dir: Path, session: requests.Session):
