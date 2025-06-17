@@ -215,5 +215,13 @@ The CI pipeline runs these commands automatically.
 
 ## Want to add a new Page?
 ```
-create a python file in the src/page folder. It will be automatical added to the ui. 
+create a python file in the src/page folder. It will be automatical added to the ui.
 ```
+
+## OpenRouteService Notebook
+
+In `jupyter/openrouteservice_demo.ipynb` findest du ein Beispiel, das mithilfe
+von [openrouteservice](https://openrouteservice.org/) und Folium die Distanz
+und Route zwischen zwei Koordinaten sowohl zu Fuß als auch mit dem Fahrrad
+berechnet und auf einer Karte anzeigt. Um das Notebook auszuführen, ist ein
+gültiger OpenRouteService API&#8209;Key erforderlich.
