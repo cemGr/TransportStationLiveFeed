@@ -78,6 +78,12 @@ def insert_trips_from_csv(path: Path, conn):
     with conn.cursor() as cur, open(path, newline="") as f:
         reader = csv.DictReader(f)
         for row in reader:
+            bike_id = row.get("bike_id")
+            try:
+                bike_id = int(bike_id)
+            except (TypeError, ValueError):
+                bike_id = None
+
             cur.execute(
                 sql,
                 (
@@ -90,7 +96,7 @@ def insert_trips_from_csv(path: Path, conn):
                     int(row.get("end_station", 0)),
                     float(row.get("end_lat", 0.0)),
                     float(row.get("end_lon", 0.0)),
-                    int(row.get("bike_id", 0)),
+                    bike_id,
                     row.get("bike_type"),
                 ),
             )
