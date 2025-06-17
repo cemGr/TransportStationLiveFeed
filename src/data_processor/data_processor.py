@@ -117,7 +117,9 @@ def clean_trip_csv(
     dest_root.mkdir(parents=True, exist_ok=True)
     out = dest_root / src.with_suffix(".clean.csv").name
     if out.exists():
-        return None
+        # Skip expensive processing when the cleaned file already exists
+        # but still return the path so callers can work with the data.
+        return out
 
     # ▸ read
     trips = pd.read_csv(src, encoding=ENCODING, low_memory=False)

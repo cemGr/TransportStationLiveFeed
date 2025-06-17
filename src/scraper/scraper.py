@@ -162,10 +162,9 @@ def extract_trip_zip(dest_dir, zip_path):
                 continue
 
             dst_file = dest_dir / Path(m.filename).name
-            if dst_file.exists():
-                continue
-            with zf.open(m) as src, open(dst_file, "wb") as out:
-                shutil.copyfileobj(src, out)
+            if not dst_file.exists():
+                with zf.open(m) as src, open(dst_file, "wb") as out:
+                    shutil.copyfileobj(src, out)
 
             # run cleaner immediately if station data is available
 
@@ -178,15 +177,13 @@ def extract_trip_zip(dest_dir, zip_path):
                 )
             else:
                 try:
-                    cleaned = clean_trip_csv(dst_file, station_csv, TRIP_DIR)
+                    cleaned_path = clean_trip_csv(dst_file, station_csv, TRIP_DIR)
                 except Exception as exc:
                     print(f"Warning: failed to clean trip data {dst_file.name}: {exc}")
-                    cleaned = None
-
-                if cleaned:
+                else:
                     conn = open_connection()
                     try:
-                        insert_trips_from_csv(cleaned, conn)
+                        insert_trips_from_csv(cleaned_path, conn)
                     finally:
                         conn.close()
 
