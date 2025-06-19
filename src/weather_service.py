@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Tuple, Optional
+from pathlib import Path
 import os
 import argparse
 import logging
@@ -41,6 +42,11 @@ def parse_args(argv: List[str] | None = None) -> argparse.Namespace:
         metavar="PATH",
         help="Optional path to cleaned trips CSV instead of DB",
     )
+    parser.add_argument(
+        "--trips-dir",
+        metavar="DIR",
+        help="Load and merge all CSV files from DIR",
+    )
     return parser.parse_args(argv)
 
 
@@ -48,17 +54,48 @@ def load_trips(
     conn=None,
     *,
     csv_path: str | None = None,
+    csv_dir: str | None = None,
     since: Optional[datetime] = None,
     limit: int = TRIP_BATCH_SIZE,
 ) -> pd.DataFrame:
     """Load a batch of trip rows from the database or CSV."""
+    if csv_dir:
+        logging.info("Loading trips from directory %s", csv_dir)
+        frames: List[pd.DataFrame] = []
+        total = 0
+        for path in sorted(Path(csv_dir).glob("*.csv")):
+            chunk = pd.read_csv(path, parse_dates=["start_time", "end_time"])
+            if since is not None:
+                chunk = chunk[chunk["start_time"] > since]
+            frames.append(chunk)
+            total += len(chunk)
+            if total >= limit:
+                break
+        if frames:
+            df = pd.concat(frames, ignore_index=True)
+            df = df.sort_values("start_time").head(limit)
+        else:
+            df = pd.DataFrame(
+                columns=[
+                    "start_time",
+                    "end_time",
+                    "start_station",
+                    "end_station",
+                    "start_lat",
+                    "start_lon",
+                    "end_lat",
+                    "end_lon",
+                ]
+            )
+        logging.info("Loaded %s trips from CSV directory", len(df))
+        return df
+
     if csv_path:
         logging.info("Loading trips from %s", csv_path)
         df = pd.read_csv(csv_path, parse_dates=["start_time", "end_time"])
         if since is not None:
             df = df[df["start_time"] > since]
-        df = df.sort_values("start_time")
-        df = df.head(limit)
+        df = df.sort_values("start_time").head(limit)
         logging.info("Loaded %s trips from CSV", len(df))
         return df
 
@@ -310,13 +347,15 @@ def main(argv: List[str] | None = None) -> None:
     """CLI entry point."""
     args = parse_args(argv)
     csv_path = args.trips_csv or os.environ.get("TRIPS_CSV_PATH")
+    csv_dir = args.trips_dir or os.environ.get("TRIPS_CSV_DIR")
 
     logging.info("Weather ingestion started")
     with open_connection() as conn:
-        last_ts = None if csv_path else get_latest_slot_ts(conn)
+        last_ts = None if (csv_path or csv_dir) else get_latest_slot_ts(conn)
         trips = load_trips(
-            conn if not csv_path else None,
+            conn if not (csv_path or csv_dir) else None,
             csv_path=csv_path,
+            csv_dir=csv_dir,
             since=last_ts,
             limit=TRIP_BATCH_SIZE,
         )

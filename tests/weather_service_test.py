@@ -56,3 +56,16 @@ def test_main_inserts_weather(load_trips, cached_session, open_conn):
 
     executed = "".join(call[0][0] for call in cur.execute.call_args_list)
     assert "INSERT INTO public.station_weather" in executed
+
+
+def test_load_trips_from_dir(tmp_path):
+    df1 = sample_trips()
+    df2 = sample_trips().assign(
+        start_time=pd.Timestamp("2024-01-02 00:10:00"),
+        end_time=pd.Timestamp("2024-01-02 00:15:00"),
+    )
+    df1.to_csv(tmp_path / "a.csv", index=False)
+    df2.to_csv(tmp_path / "b.csv", index=False)
+
+    result = ws.load_trips(None, csv_dir=str(tmp_path), limit=10)
+    assert len(result) == 2
