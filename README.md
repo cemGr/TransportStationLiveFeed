@@ -207,15 +207,14 @@ station and hour.
 | `weather_code`  | `INTEGER`          | Most frequent weather code                     |
 | `season`        | `TEXT`             | Season derived from the timestamp              |
 
-`src/weather_service.py` loads all trips from the database, queries the
-Open‑Meteo API for unique station coordinates and aggregates both datasets by
-hour. Trips per station are counted and joined with the hourly weather features
-such as `temp_class` or `is_raining`. The resulting rows are upserted into the
-`station_weather` table.
+`src/weather_service.py` processes trips in small batches to respect the
+Open‑Meteo API limits. It loads up to ~60 000 new trip records on each run,
+aggregates them by hour and joins the results with weather observations. The
+merged rows are upserted into the `station_weather` table.
 
 Open‑Meteo imposes rate limits which can lead to HTTP 429 errors. The service
-batches up to `50` coordinates per request (`BATCH_SIZE`) and caches responses
-to minimise repeated calls.
+batches up to `50` coordinates per request (`BATCH_SIZE`), caches responses and
+runs every 5–15 minutes in Docker to limit the number of processed trips.
 
 Start the service with Docker:
 
