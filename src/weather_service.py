@@ -234,17 +234,17 @@ def save_weather(df: pd.DataFrame, conn) -> None:
             PRIMARY KEY (slot_ts, station_id)
         );
     """
-    insert_sql = """
-        INSERT INTO public.station_weather (
-            slot_ts, station_id, bikes_taken, bikes_returned,
-            lat, lon, cluster_id,
-            temperature_2m, temp_class, rain_mm,
-            is_raining, weather_code, season
-        ) VALUES (
-            %s, %s, %s, %s,
-            %s, %s, %s,
-            %s, %s, %s,
-            %s, %s, %s
+                    row.slot_ts.to_pydatetime(),
+                    int(row.station_id),
+                    int(row.bikes_taken),
+                    int(row.bikes_returned),
+                    float(row.lat) if row.lat == row.lat else None,
+                    float(row.lon) if row.lon == row.lon else None,
+                    int(row.cluster_id) if row.cluster_id == row.cluster_id else None,
+                    float(row.temperature_2m) if row.temperature_2m == row.temperature_2m else None,
+                    float(row.rain_mm) if row.rain_mm == row.rain_mm else None,
+                    bool(row.is_raining) if row.is_raining == row.is_raining else None,
+                    int(row.weather_code) if row.weather_code == row.weather_code else None,
         )
         ON CONFLICT (slot_ts, station_id) DO UPDATE SET
             bikes_taken=EXCLUDED.bikes_taken,
