@@ -10,7 +10,6 @@ src/config.py
 src/database.py
 src/distance.py
 src/main.py
-src/math.py
 src/data_processor/__init__.py
 src/data_processor/data_processor.py
 src/datastructure/__init__.py
@@ -27,7 +26,6 @@ src/pages/__init__.py
 src/scraper/__init__.py
 src/scraper/scraper.py
 tests/__init__.py
-tests/calc_test.py
 tests/db_knn_query_test.py
 tests/db_loader_test.py
 tests/distance_test.py
