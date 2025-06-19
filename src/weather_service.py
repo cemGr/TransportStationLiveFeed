@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Tuple
+from typing import List, Tuple, Optional
 
 import pandas as pd
 import requests
@@ -22,15 +22,26 @@ from .db import open_connection
 
 API_URL = "https://archive-api.open-meteo.com/v1/archive"
 BATCH_SIZE = 50
+TRIP_BATCH_SIZE = 60000  # process roughly 50k-70k trips per run
 
 
-def load_trips(conn) -> pd.DataFrame:
-    """Load all trip rows from the database."""
+def load_trips(
+    conn,
+    since: Optional[datetime] = None,
+    limit: int = TRIP_BATCH_SIZE,
+) -> pd.DataFrame:
+    """Load a batch of trip rows from the database."""
     sql = (
         "SELECT start_time, end_time, start_station, end_station, "
-        "start_lat, start_lon, end_lat, end_lon FROM public.trips;"
+        "start_lat, start_lon, end_lat, end_lon FROM public.trips"
     )
-    return pd.read_sql_query(sql, conn, parse_dates=["start_time", "end_time"])
+    params: List = []
+    if since is not None:
+        sql += " WHERE start_time > %s"
+        params.append(since)
+    sql += " ORDER BY start_time LIMIT %s"
+    params.append(limit)
+    return pd.read_sql_query(sql, conn, params=params, parse_dates=["start_time", "end_time"])
 
 
 def _fetch_batch(
@@ -163,6 +174,15 @@ def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFra
     return agg
 
 
+def get_latest_slot_ts(conn) -> Optional[datetime]:
+    """Return the most recent slot timestamp in ``station_weather``."""
+    sql = "SELECT MAX(slot_ts) FROM public.station_weather;"
+    with conn.cursor() as cur:
+        cur.execute(sql)
+        row = cur.fetchone()
+        return row[0] if row and row[0] is not None else None
+
+
 def save_weather(df: pd.DataFrame, conn) -> None:
     """Save aggregated data into ``station_weather`` table."""
     create_sql = """
@@ -235,7 +255,10 @@ def save_weather(df: pd.DataFrame, conn) -> None:
 def main() -> None:
     """CLI entry point."""
     with open_connection() as conn:
-        trips = load_trips(conn)
+        last_ts = get_latest_slot_ts(conn)
+        trips = load_trips(conn, since=last_ts, limit=TRIP_BATCH_SIZE)
+        if trips.empty:
+            return
         weather = fetch_weather(trips)
         agg = compute_aggregates(trips, weather)
         save_weather(agg, conn)
