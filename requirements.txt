@@ -11,6 +11,9 @@ openrouteservice
 requests>=2.31
 beautifulsoup4>=4.12
 tqdm>=4.66
+openmeteo-requests>=1.5
+requests-cache>=1.2
+retry-requests>=2.0
 
 # GeoDataProcessing
 geopandas
