@@ -185,6 +185,44 @@ for row in stations:
 
 The package also exposes a `Database` context manager for more advanced usage.
 
+## Weather Service
+
+The table `station_weather` stores hourly bike activity merged with the
+corresponding weather observations. Each entry is unique for a combination of a
+station and hour.
+
+| Column          | Type               | Description                                    |
+|-----------------|--------------------|------------------------------------------------|
+| `slot_ts`       | `TIMESTAMP`        | Start of the hourly time slot (UTC)            |
+| `station_id`    | `INTEGER`          | Identifier of the station                      |
+| `bikes_taken`   | `INTEGER`          | Trips that started at the station within hour  |
+| `bikes_returned`| `INTEGER`          | Trips that ended at the station within hour    |
+| `lat`           | `DOUBLE PRECISION` | Station latitude                               |
+| `lon`           | `DOUBLE PRECISION` | Station longitude                              |
+| `cluster_id`    | `INTEGER`          | K‑means cluster id of the station              |
+| `temperature_2m`| `REAL`             | Mean air temperature in °C                     |
+| `temp_class`    | `TEXT`             | Temperature class (`cold`, `mid`, `warm`, `hot`) |
+| `rain_mm`       | `REAL`             | Mean rainfall in millimetres                   |
+| `is_raining`    | `BOOLEAN`          | `TRUE` if rain is at least 0.1&nbsp;mm         |
+| `weather_code`  | `INTEGER`          | Most frequent weather code                     |
+| `season`        | `TEXT`             | Season derived from the timestamp              |
+
+`src/weather_service.py` loads all trips from the database, queries the
+Open‑Meteo API for unique station coordinates and aggregates both datasets by
+hour. Trips per station are counted and joined with the hourly weather features
+such as `temp_class` or `is_raining`. The resulting rows are upserted into the
+`station_weather` table.
+
+Open‑Meteo imposes rate limits which can lead to HTTP 429 errors. The service
+batches up to `50` coordinates per request (`BATCH_SIZE`) and caches responses
+to minimise repeated calls.
+
+Start the service with Docker:
+
+```bash
+docker compose up weather_service
+```
+
 ## Pytest
 
 ```bash
