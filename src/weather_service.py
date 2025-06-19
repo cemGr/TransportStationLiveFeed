@@ -4,10 +4,17 @@ from __future__ import annotations
 from datetime import datetime
 from typing import List, Tuple, Optional
 
+import logging
+
 import pandas as pd
 import requests
 import requests_cache
 from retry_requests import retry
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+)
 try:
     from sklearn.cluster import KMeans  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
@@ -31,6 +38,8 @@ def load_trips(
     limit: int = TRIP_BATCH_SIZE,
 ) -> pd.DataFrame:
     """Load a batch of trip rows from the database."""
+    
+    logging.info("Loading up to %s trips since %s", limit, since)
     sql = (
         "SELECT start_time, end_time, start_station, end_station, "
         "start_lat, start_lon, end_lat, end_lon FROM public.trips"
@@ -41,7 +50,11 @@ def load_trips(
         params.append(since)
     sql += " ORDER BY start_time LIMIT %s"
     params.append(limit)
-    return pd.read_sql_query(sql, conn, params=params, parse_dates=["start_time", "end_time"])
+
+    df = pd.read_sql_query(sql, conn, params=params, parse_dates=["start_time", "end_time"])
+    logging.info("Loaded %s trips", len(df))
+    return df
+
 
 
 def _fetch_batch(
@@ -51,6 +64,12 @@ def _fetch_batch(
     end_date: datetime,
 ) -> pd.DataFrame:
     """Fetch a batch of hourly weather for the given coordinates."""
+    logging.debug(
+        "Requesting weather for %s coords from %s to %s",
+        len(coords),
+        start_date,
+        end_date,
+    )
     lat = ",".join(f"{c[0]:.5f}" for c in coords)
     lon = ",".join(f"{c[1]:.5f}" for c in coords)
     params = {
@@ -100,6 +119,12 @@ def fetch_weather(df: pd.DataFrame) -> pd.DataFrame:
         .itertuples(index=False, name=None)
     )
     coords = list(coords)
+    logging.info(
+        "Fetching weather for %s coordinates from %s to %s",
+        len(coords),
+        start_date,
+        end_date,
+    )
     session = retry(requests_cache.CachedSession("weather", expire_after=3600))
     frames = []
     for i in range(0, len(coords), BATCH_SIZE):
@@ -114,6 +139,7 @@ def fetch_weather(df: pd.DataFrame) -> pd.DataFrame:
 
 def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame:
     """Compute hourly trip and weather aggregates."""
+    logging.info("Computing aggregates for %s trips and %s weather rows", len(trips), len(weather))
     df = trips.copy()
     df["slot_ts"] = df["start_time"].dt.floor("h")
     df["hour_of_day"] = df["slot_ts"].dt.hour
@@ -171,6 +197,7 @@ def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFra
 
     season_map = {12: "Winter", 1: "Winter", 2: "Winter", 3: "Spring", 4: "Spring", 5: "Spring", 6: "Summer", 7: "Summer", 8: "Summer", 9: "Fall", 10: "Fall", 11: "Fall"}
     agg["season"] = agg["slot_ts"].dt.month.map(season_map)
+    logging.info("Computed %s aggregate rows", len(agg))
     return agg
 
 
@@ -180,7 +207,11 @@ def get_latest_slot_ts(conn) -> Optional[datetime]:
     with conn.cursor() as cur:
         cur.execute(sql)
         row = cur.fetchone()
-        return row[0] if row and row[0] is not None else None
+        ts = row[0] if row and row[0] is not None else None
+        logging.info("Latest processed slot_ts: %s", ts)
+        return ts
+
+
 
 
 def save_weather(df: pd.DataFrame, conn) -> None:
@@ -250,18 +281,22 @@ def save_weather(df: pd.DataFrame, conn) -> None:
                 ),
             )
         conn.commit()
+    logging.info("Inserted %s rows into station_weather", len(df))
 
 
 def main() -> None:
     """CLI entry point."""
+    logging.info("Weather ingestion started")
     with open_connection() as conn:
         last_ts = get_latest_slot_ts(conn)
         trips = load_trips(conn, since=last_ts, limit=TRIP_BATCH_SIZE)
         if trips.empty:
+            logging.info("No new trips found")
             return
         weather = fetch_weather(trips)
         agg = compute_aggregates(trips, weather)
         save_weather(agg, conn)
+    logging.info("Weather ingestion finished")
 
 
 if __name__ == "__main__":
