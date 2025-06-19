@@ -62,6 +62,20 @@ services:
     depends_on:
       - db
 
+  weather_service:
+    build: .
+    container_name: weather_service
+    command: >
+      sh -c "while true; do python -m src.weather_service; sleep 600; done"
+    environment:
+      PGHOST: db
+      PGPORT: 5432
+      PGUSER: radverkehr
+      PGPASSWORD: passwort123
+      PGDATABASE: radstationen
+    depends_on:
+      - db
+
 volumes:
   pgdata:
   pgadmindata:
