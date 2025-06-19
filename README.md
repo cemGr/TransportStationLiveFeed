@@ -222,6 +222,13 @@ Start the service with Docker:
 docker compose up weather_service
 ```
 
+To load trips from a local CSV file instead of the database, pass the file path
+via the `--trips-csv` option (or set `TRIPS_CSV_PATH`):
+
+```bash
+docker compose run weather_service python -m src.weather_service --trips-csv jupyter/cleaned_trip_data.csv
+```
+
 The service logs progress to stdout including the number of trips loaded,
 weather points fetched and rows inserted. Check the container logs for details
 about the most recent ingestion run.

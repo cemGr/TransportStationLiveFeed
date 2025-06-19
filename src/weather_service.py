@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Tuple, Optional
+import os
+import argparse
 import logging
 
 import pandas as pd
@@ -31,12 +33,38 @@ BATCH_SIZE = 50
 TRIP_BATCH_SIZE = 60000  # process roughly 50k-70k trips per run
 
 
+def parse_args(argv: List[str] | None = None) -> argparse.Namespace:
+    """Parse command line arguments."""
+    parser = argparse.ArgumentParser(description="Ingest weather data")
+    parser.add_argument(
+        "--trips-csv",
+        metavar="PATH",
+        help="Optional path to cleaned trips CSV instead of DB",
+    )
+    return parser.parse_args(argv)
+
+
 def load_trips(
-    conn,
+    conn=None,
+    *,
+    csv_path: str | None = None,
     since: Optional[datetime] = None,
     limit: int = TRIP_BATCH_SIZE,
 ) -> pd.DataFrame:
-    """Load a batch of trip rows from the database."""
+    """Load a batch of trip rows from the database or CSV."""
+    if csv_path:
+        logging.info("Loading trips from %s", csv_path)
+        df = pd.read_csv(csv_path, parse_dates=["start_time", "end_time"])
+        if since is not None:
+            df = df[df["start_time"] > since]
+        df = df.sort_values("start_time")
+        df = df.head(limit)
+        logging.info("Loaded %s trips from CSV", len(df))
+        return df
+
+    if conn is None:
+        raise ValueError("Database connection required when csv_path is not set")
+
     logging.info("Loading up to %s trips since %s", limit, since)
     sql = (
         "SELECT start_time, end_time, start_station, end_station, "
@@ -49,7 +77,7 @@ def load_trips(
     sql += " ORDER BY start_time LIMIT %s"
     params.append(limit)
     df = pd.read_sql_query(sql, conn, params=params, parse_dates=["start_time", "end_time"])
-    logging.info("Loaded %s trips", len(df))
+    logging.info("Loaded %s trips from DB", len(df))
     return df
 
 
@@ -278,12 +306,20 @@ def save_weather(df: pd.DataFrame, conn) -> None:
     logging.info("Inserted %s rows into station_weather", len(df))
 
 
-def main() -> None:
+def main(argv: List[str] | None = None) -> None:
     """CLI entry point."""
+    args = parse_args(argv)
+    csv_path = args.trips_csv or os.environ.get("TRIPS_CSV_PATH")
+
     logging.info("Weather ingestion started")
     with open_connection() as conn:
-        last_ts = get_latest_slot_ts(conn)
-        trips = load_trips(conn, since=last_ts, limit=TRIP_BATCH_SIZE)
+        last_ts = None if csv_path else get_latest_slot_ts(conn)
+        trips = load_trips(
+            conn if not csv_path else None,
+            csv_path=csv_path,
+            since=last_ts,
+            limit=TRIP_BATCH_SIZE,
+        )
         if trips.empty:
             logging.info("No new trips found")
             return
