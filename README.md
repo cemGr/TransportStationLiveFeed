@@ -222,6 +222,10 @@ Start the service with Docker:
 docker compose up weather_service
 ```
 
+The service logs progress to stdout including the number of trips loaded,
+weather points fetched and rows inserted. Check the container logs for details
+about the most recent ingestion run.
+
 ## Pytest
 
 ```bash
