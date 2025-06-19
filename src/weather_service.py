@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import List, Tuple, Optional
+
 import logging
 
 import pandas as pd
@@ -37,6 +38,7 @@ def load_trips(
     limit: int = TRIP_BATCH_SIZE,
 ) -> pd.DataFrame:
     """Load a batch of trip rows from the database."""
+    
     logging.info("Loading up to %s trips since %s", limit, since)
     sql = (
         "SELECT start_time, end_time, start_station, end_station, "
@@ -48,9 +50,11 @@ def load_trips(
         params.append(since)
     sql += " ORDER BY start_time LIMIT %s"
     params.append(limit)
+
     df = pd.read_sql_query(sql, conn, params=params, parse_dates=["start_time", "end_time"])
     logging.info("Loaded %s trips", len(df))
     return df
+
 
 
 def _fetch_batch(
@@ -206,6 +210,8 @@ def get_latest_slot_ts(conn) -> Optional[datetime]:
         ts = row[0] if row and row[0] is not None else None
         logging.info("Latest processed slot_ts: %s", ts)
         return ts
+
+
 
 
 def save_weather(df: pd.DataFrame, conn) -> None:
