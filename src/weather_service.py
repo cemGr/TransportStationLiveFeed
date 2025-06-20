@@ -1,4 +1,5 @@
 """Weather service for Open-Meteo aggregation."""
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -20,12 +21,14 @@ logging.basicConfig(
 try:
     from sklearn.cluster import KMeans  # type: ignore
 except Exception:  # pragma: no cover - optional dependency
+
     class KMeans:  # type: ignore
         def __init__(self, n_clusters: int = 8, random_state: int | None = None):
             self.n_clusters = n_clusters
 
         def fit_predict(self, X):
             return [0] * len(X)
+
 
 from .db import open_connection
 
@@ -113,7 +116,9 @@ def load_trips(
         params.append(since)
     sql += " ORDER BY start_time LIMIT %s"
     params.append(limit)
-    df = pd.read_sql_query(sql, conn, params=params, parse_dates=["start_time", "end_time"])
+    df = pd.read_sql_query(
+        sql, conn, params=params, parse_dates=["start_time", "end_time"]
+    )
     logging.info("Loaded %s trips from DB", len(df))
     return df
 
@@ -194,13 +199,24 @@ def fetch_weather(df: pd.DataFrame) -> pd.DataFrame:
     if frames:
         return pd.concat(frames, ignore_index=True)
     return pd.DataFrame(
-        columns=["time", "latitude", "longitude", "temperature_2m", "rain", "weather_code"]
+        columns=[
+            "time",
+            "latitude",
+            "longitude",
+            "temperature_2m",
+            "rain",
+            "weather_code",
+        ]
     )
 
 
 def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame:
     """Compute hourly trip and weather aggregates."""
-    logging.info("Computing aggregates for %s trips and %s weather rows", len(trips), len(weather))
+    logging.info(
+        "Computing aggregates for %s trips and %s weather rows",
+        len(trips),
+        len(weather),
+    )
     df = trips.copy()
     df["slot_ts"] = df["start_time"].dt.floor("h")
     df["hour_of_day"] = df["slot_ts"].dt.hour
@@ -210,7 +226,13 @@ def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFra
     stations = (
         df[["start_station", "start_lat", "start_lon"]]
         .drop_duplicates()
-        .rename(columns={"start_station": "station_id", "start_lat": "lat", "start_lon": "lon"})
+        .rename(
+            columns={
+                "start_station": "station_id",
+                "start_lat": "lat",
+                "start_lon": "lon",
+            }
+        )
     )
     if not stations.empty:
         kmeans = KMeans(n_clusters=min(80, len(stations)), random_state=0)
@@ -218,15 +240,24 @@ def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFra
     else:
         stations["cluster_id"] = []
 
-    taken = df.groupby(["slot_ts", "start_station"]).size().reset_index(name="bikes_taken")
-    returned = df.groupby(["slot_ts", "end_station"]).size().reset_index(name="bikes_returned")
-    agg = (
-        pd.merge(taken, returned, left_on=["slot_ts", "start_station"], right_on=["slot_ts", "end_station"], how="outer")
-        .rename(columns={"start_station": "station_id"})
+    taken = (
+        df.groupby(["slot_ts", "start_station"]).size().reset_index(name="bikes_taken")
     )
+    returned = (
+        df.groupby(["slot_ts", "end_station"]).size().reset_index(name="bikes_returned")
+    )
+    agg = pd.merge(
+        taken,
+        returned,
+        left_on=["slot_ts", "start_station"],
+        right_on=["slot_ts", "end_station"],
+        how="outer",
+    ).rename(columns={"start_station": "station_id"})
     agg["station_id"] = agg["station_id"].fillna(agg["end_station"]).astype(int)
     agg = agg.drop(columns="end_station")
-    agg[["bikes_taken", "bikes_returned"]] = agg[["bikes_taken", "bikes_returned"]].fillna(0).astype(int)
+    agg[["bikes_taken", "bikes_returned"]] = (
+        agg[["bikes_taken", "bikes_returned"]].fillna(0).astype(int)
+    )
 
     weather["slot_ts"] = pd.to_datetime(weather["time"]).dt.floor("h")
     weather_hourly = (
@@ -234,7 +265,10 @@ def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFra
         .agg(
             temperature_2m=("temperature_2m", "mean"),
             rain_mm=("rain", "mean"),
-            weather_code=("weather_code", lambda x: x.mode().iloc[0] if not x.mode().empty else None),
+            weather_code=(
+                "weather_code",
+                lambda x: x.mode().iloc[0] if not x.mode().empty else None,
+            ),
         )
         .reset_index()
     )
@@ -251,12 +285,24 @@ def compute_aggregates(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFra
 
     weather_hourly["temp_class"] = weather_hourly["temperature_2m"].apply(temp_class)
 
-    agg = (
-        agg.merge(stations, on="station_id", how="left")
-        .merge(weather_hourly, on="slot_ts", how="left")
+    agg = agg.merge(stations, on="station_id", how="left").merge(
+        weather_hourly, on="slot_ts", how="left"
     )
 
-    season_map = {12: "Winter", 1: "Winter", 2: "Winter", 3: "Spring", 4: "Spring", 5: "Spring", 6: "Summer", 7: "Summer", 8: "Summer", 9: "Fall", 10: "Fall", 11: "Fall"}
+    season_map = {
+        12: "Winter",
+        1: "Winter",
+        2: "Winter",
+        3: "Spring",
+        4: "Spring",
+        5: "Spring",
+        6: "Summer",
+        7: "Summer",
+        8: "Summer",
+        9: "Fall",
+        10: "Fall",
+        11: "Fall",
+    }
     agg["season"] = agg["slot_ts"].dt.month.map(season_map)
     logging.info("Computed %s aggregate rows", len(agg))
     return agg
@@ -331,11 +377,19 @@ def save_weather(df: pd.DataFrame, conn) -> None:
                     float(row.lat) if row.lat == row.lat else None,
                     float(row.lon) if row.lon == row.lon else None,
                     int(row.cluster_id) if row.cluster_id == row.cluster_id else None,
-                    float(row.temperature_2m) if row.temperature_2m == row.temperature_2m else None,
+                    (
+                        float(row.temperature_2m)
+                        if row.temperature_2m == row.temperature_2m
+                        else None
+                    ),
                     row.temp_class,
                     float(row.rain_mm) if row.rain_mm == row.rain_mm else None,
                     bool(row.is_raining) if row.is_raining == row.is_raining else None,
-                    int(row.weather_code) if row.weather_code == row.weather_code else None,
+                    (
+                        int(row.weather_code)
+                        if row.weather_code == row.weather_code
+                        else None
+                    ),
                     row.season,
                 ),
             )
@@ -344,8 +398,16 @@ def save_weather(df: pd.DataFrame, conn) -> None:
 
 
 def main(argv: List[str] | None = None) -> None:
-    """CLI entry point."""
-    args = parse_args(argv)
+    """CLI entry point.
+
+    Parameters
+    ----------
+    argv : list[str] | None, optional
+        Command line arguments. If ``None`` the service will not attempt to
+        parse ``sys.argv``. This makes programmatic use and unit testing easier
+        because pytest injects its own command line flags.
+    """
+    args = parse_args(argv or [])
     csv_path = args.trips_csv or os.environ.get("TRIPS_CSV_PATH")
     csv_dir = args.trips_dir or os.environ.get("TRIPS_CSV_DIR")
 

@@ -1,21 +1,20 @@
-
 services:
   db:
-    image: postgis/postgis:15-3.3        # PostGIS-Image basierend auf PostgreSQL 15, PostGIS 3.3
+    image: postgis/postgis:15-3.3        # PostgreSQL 15 with PostGIS 3.3
     container_name: pg_postgis
     restart: unless-stopped
     environment:
-      POSTGRES_USER: radverkehr           # DB-User
-      POSTGRES_PASSWORD: passwort123  
-      POSTGRES_DB: radstationen           # Datenbankname
+      POSTGRES_USER: radverkehr           # database user
+      POSTGRES_PASSWORD: passwort123
+      POSTGRES_DB: radstationen           # database name
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./initdb:/docker-entrypoint-initdb.d   # <- hier werden alle *.sql beim Erst-Run ausgeführt
+      - ./initdb:/docker-entrypoint-initdb.d   # executes *.sql files on first run
       - ./data:/data
     ports:
-      - "5432:5432"                       # Exponiere Port 5432 beim Host
+      - "5432:5432"                       # expose port 5432
 
-  #  pgAdmin zum Verwalten via Web-GUI (http://localhost:8080)
+  # pgAdmin for management via web GUI (http://localhost:8080)
   pgadmin:
     image: dpage/pgadmin4:7.5
     container_name: pgadmin
