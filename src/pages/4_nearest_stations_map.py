@@ -21,11 +21,10 @@ def load_stations() -> pd.DataFrame:
     df = df[df["Status"] == "Active"].reset_index(drop=True)
     return df[["StationName", "start_lat", "start_long"]]
 
-# Stationsdaten einmalig laden, damit sie bei der Formularverarbeitung
-# sofort verfügbar sind.
+# Load station data once so it is immediately available during form handling
 stations_df = load_stations()
 
-st.title("🚏 Nächste Stationen finden")
+st.title("🚏 Find nearest stations")
 
 if "nearest" not in st.session_state:
     st.session_state["nearest"] = None
@@ -34,8 +33,8 @@ if "nearest" not in st.session_state:
 with st.form("knn_form"):
     lat = st.number_input("Latitude", value=34.05, format="%.5f")
     lon = st.number_input("Longitude", value=-118.25, format="%.5f")
-    k = st.number_input("Anzahl Stationen", min_value=1, value=5, step=1)
-    submitted = st.form_submit_button("Suche")
+    k = st.number_input("Number of stations", min_value=1, value=5, step=1)
+    submitted = st.form_submit_button("Search")
 
 if submitted:
     st.session_state["nearest"] = find_k_nearest_stations(stations_df, lat, lon, int(k))

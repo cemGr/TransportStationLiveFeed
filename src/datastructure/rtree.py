@@ -14,31 +14,30 @@ def find_k_nearest_stations(
     src_crs: str = "EPSG:4326",
     dst_crs: str = "EPSG:3857"
 ) -> pd.DataFrame:
-    """
-    Finde die k nächsten Stationen zu einem Eingabepunkt, anhand von STRtree.
+    """Return the k nearest stations for a given point using ``STRtree``.
 
     Parameters
     ----------
     stations_df : pd.DataFrame
-        DataFrame mit Spalten ['StationName', 'start_lat', 'start_long'].
+        DataFrame with columns ['StationName', 'start_lat', 'start_long'].
     start_lat : float
-        Breitengrad des Eingabepunkts.
+        Latitude of the input point.
     start_long : float
-        Längengrad des Eingabepunkts.
+        Longitude of the input point.
     k : int
-        Anzahl der nächsten Stationen, die zurückgegeben werden.
+        Number of nearest stations to return.
     src_crs : str
-        CRS der Eingabekoordinaten (Standard WGS84).
+        CRS of the input coordinates (default WGS84).
     dst_crs : str
-        Projektives CRS für metrische Entfernungen (Standard Web-Mercator).
+        Projected CRS for metric distances (default Web-Mercator).
 
     Returns
     -------
     pd.DataFrame
-        DataFrame mit den Spalten ['StationName', 'start_lat', 'start_long',
-        'distance'], sortiert nach aufsteigender Entfernung in Metern.
+        DataFrame with columns ['StationName', 'start_lat', 'start_long',
+        'distance'] sorted by ascending distance in meters.
     """
-    # 1) GeoDataFrame erstellen und ins metrische CRS transformieren
+    # 1) Create a GeoDataFrame and transform to a metric CRS
     gdf_m = (
         gpd.GeoDataFrame(
             stations_df.copy(),
@@ -50,37 +49,37 @@ def find_k_nearest_stations(
         .to_crs(dst_crs)
     )
 
-    # 2) Listen für STRtree und Namen
+    # 2) Lists for STRtree and names
     geoms = list(gdf_m.geometry)
     names = list(gdf_m["StationName"])
     lats = list(stations_df["start_lat"])
     longs = list(stations_df["start_long"])
 
-    # 3) Eingabepunkt in dieselbe Projektion
+    # 3) Input point in the same projection
     inp = (
         gpd.GeoSeries([Point(start_long, start_lat)], crs=src_crs)
         .to_crs(dst_crs)
         .iloc[0]
     )
 
-    # 4) Iteratives Nearest: pro Runde Baum bauen, Index ermitteln, aufnehmen & entfernen
+    # 4) Iteratively find the nearest station, then remove it
     nearest = []
     for _ in range(min(k, len(geoms))):
         tree = STRtree(geoms)
         idx = tree.nearest(inp)
-        # falls numpy-Array o.ä., erstes Element extrahieren
+        # ``nearest`` can return numpy arrays; take the first element
         if isinstance(idx, (list, tuple, np.ndarray)):
             idx = int(np.array(idx).flat[0])
         else:
             idx = int(idx)
         nearest.append((geoms[idx], names[idx], lats[idx], longs[idx]))
-        # diese Station herausnehmen
+        # remove this station from consideration
         geoms.pop(idx)
         names.pop(idx)
         lats.pop(idx)
         longs.pop(idx)
 
-    # 5) Ergebnis-DataFrame zusammenbauen
+    # 5) Build the result DataFrame
     result = pd.DataFrame({
         "StationName": [name for _, name, _, _ in nearest],
         "start_lat": [lat for _, _, lat, _ in nearest],

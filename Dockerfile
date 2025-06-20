@@ -1,17 +1,17 @@
-# 1. Basis-Image mit Python
+# 1. Base image
 FROM python:3.11-slim
 
-# 2. Arbeitsverzeichnis
+# 2. Working directory
 WORKDIR /app
 
-# 3. Abhängigkeiten kopieren und installieren
+# 3. Copy requirements and install
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# 4. Quellcode kopieren
+# 4. Copy application source
 COPY src/ src/
 
 EXPOSE 8501
 
-# 5. Default-Command
+# 5. Default command
 CMD ["streamlit", "run", "src/main.py", "--server.port=8501", "--server.address=0.0.0.0"]

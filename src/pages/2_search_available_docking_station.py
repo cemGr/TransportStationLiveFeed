@@ -31,7 +31,7 @@ if submitted:
         )
         st.session_state["user_loc"] = (lat, lon)
     except Exception as e:  # pragma: no cover - UI feedback
-        st.error(f"Datenbankverbindung fehlgeschlagen: {e}")
+        st.error(f"Database connection failed: {e}")
 
 if st.session_state["nearest_docks"]:
     lat, lon = st.session_state["user_loc"]
