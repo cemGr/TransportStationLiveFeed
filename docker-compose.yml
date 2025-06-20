@@ -76,6 +76,33 @@ services:
     depends_on:
       - db
 
+  ui:
+      build:
+        context: .            # reuse repo root
+        dockerfile: Dockerfile   # see below
+      container_name: streamlit_ui
+      command: >
+        streamlit run src/main.py
+        --server.port=8501
+        --server.address=0.0.0.0
+        --server.headless=true
+      volumes:
+        - .:/app              # hot-reload while developing
+      environment:
+        # database connection (same as the workers)
+        PGHOST: db
+        PGPORT: 5432
+        PGUSER: radverkehr
+        PGPASSWORD: passwort123
+        PGDATABASE: radstationen
+
+        # OpenRouteService – put this in a .env file so it’s not in git
+        ORS_API_KEY: ${ORS_API_KEY}
+
+      ports:
+        - "8501:8501"         # browse http://localhost:8501
+      depends_on:
+        - db
 volumes:
   pgdata:
   pgadmindata:
