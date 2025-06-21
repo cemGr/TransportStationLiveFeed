@@ -20,12 +20,25 @@ def main() -> None:
     df["weekday"] = df["slot_ts"].dt.dayofweek
     df["is_weekend"] = df["weekday"].isin([5, 6])
 
-    cat_cols = ["temp_class", "season", "hour", "weekday", "cluster_id", "is_weekend"]
-    num_cols = [c for c in df.columns if c not in cat_cols + [TARGET_COL, "slot_ts"]]
+    cat_cols = [
+        "temp_class",
+        "season",
+        "hour",
+        "weekday",
+        "cluster_id",
+        "is_weekend",
+    ]
+    # Use all remaining columns except the target and timestamp as numeric features
+    num_cols = [
+        c for c in df.columns if c not in cat_cols + [TARGET_COL, "slot_ts"]
+    ]
 
     preproc = ColumnTransformer(
-        [("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols)],
-        remainder="passthrough",
+        [
+            ("cat", OneHotEncoder(handle_unknown="ignore"), cat_cols),
+            ("num", "passthrough", num_cols),
+        ],
+        remainder="drop",
     )
 
     # ----------------------------------------------------------- 3. Time split
@@ -64,7 +77,7 @@ def main() -> None:
     param_grid = {
         "rf__n_estimators": [200, 300, 400],
         "rf__max_depth": [None, 10, 20, 30],
-        "rf__max_features": ["auto", "sqrt", 0.5],
+        "rf__max_features": ["sqrt", 0.5],
     }
 
     search = GridSearchCV(
@@ -86,7 +99,8 @@ def main() -> None:
     # ---------------------------------------------------------- 6. Evaluation
     test_pred = best_model.predict(X_test)
     mae = mean_absolute_error(y_test, test_pred)
-    rmse = mean_squared_error(y_test, test_pred, squared=False)
+    mse = mean_squared_error(y_test, test_pred)
+    rmse = np.sqrt(mse)
     r2 = r2_score(y_test, test_pred)
     print(f"Test MAE: {mae:.3f}")
     print(f"Test RMSE: {rmse:.3f}")
