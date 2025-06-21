@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="DataSourceManagerImpl" format="xml" multifile-model="true">
-    <data-source source="LOCAL" name="radstationen@localhost" uuid="cc586a95-76a1-4607-b770-dd82a58593c1">
+    <data-source source="LOCAL" name="bikeshare@localhost" uuid="f684263c-97b1-492b-8544-06970adb290a">
       <driver-ref>postgresql</driver-ref>
       <synchronize>true</synchronize>
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
-      <jdbc-url>jdbc:postgresql://localhost:5432/radstationen</jdbc-url>
+      <jdbc-url>jdbc:postgresql://localhost:5432/bikeshare</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
   </component>

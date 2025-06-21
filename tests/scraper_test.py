@@ -42,7 +42,7 @@ def test_extract_trip_zip_auto_cleans_station(tmp_path, monkeypatch):
     zip_path = tmp_path / "trips.zip"
     with zipfile.ZipFile(zip_path, "w") as zf:
         zf.writestr("trips.csv", trip_csv)
-        zf.writestr("metro-bike-share-stations-2024-01-01.csv", station_csv)
+        zf.writestr("metro-bike-share-new_project_src-2024-01-01.csv", station_csv)
 
     dest = tmp_path / "out"
     dest.mkdir()
@@ -78,7 +78,7 @@ def test_extract_trip_zip_handles_clean_errors(tmp_path, monkeypatch, capsys):
     zip_path = tmp_path / "broken.zip"
     with zipfile.ZipFile(zip_path, "w") as zf:
         zf.writestr("trips.csv", trip_csv)
-        zf.writestr("metro-bike-share-stations-2024-01-01.csv", station_csv)
+        zf.writestr("metro-bike-share-new_project_src-2024-01-01.csv", station_csv)
 
     dest = tmp_path / "out"
     dest.mkdir()

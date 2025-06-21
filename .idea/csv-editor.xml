@@ -3,14 +3,21 @@
   <component name="CsvFileAttributes">
     <option name="attributeMap">
       <map>
-        <entry key="\jupyter\cleaned_station_data.csv">
+        <entry key="\data\processed\trip\metro-trips-2023-q4.clean.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />
             </Attribute>
           </value>
         </entry>
-        <entry key="\jupyter\cleaned_trip_data.csv">
+        <entry key="\data\processed\trip\metro-trips-2025-q1.clean.csv">
+          <value>
+            <Attribute>
+              <option name="separator" value="," />
+            </Attribute>
+          </value>
+        </entry>
+        <entry key="\data\raw\trip\metro-trips-2023-q3.csv">
           <value>
             <Attribute>
               <option name="separator" value="," />

@@ -33,7 +33,7 @@ def sample_geojson(tmp_path: Path) -> Path:
             },
         ],
     }
-    path = tmp_path / "stations.json"
+    path = tmp_path / "new_project_src.json"
     path.write_text(json.dumps(data))
     return path
 
@@ -48,7 +48,7 @@ def test_upsert_executes_insert(tmp_path):
 
     assert cur.execute.call_count == 2
     sql = cur.execute.call_args_list[0][0][0]
-    assert "INSERT INTO public.stations" in sql
+    assert "INSERT INTO public.new_project_src" in sql
     assert "ON CONFLICT (station_id)" in sql
     conn.commit.assert_called_once()
 

@@ -166,7 +166,7 @@ FROM public.stations AS s
 CROSS JOIN user_location AS u
 WHERE
   s.num_bikes > 0
-  AND s.online = TRUE          -- Only stations that are online
+  AND s.online = TRUE          -- Only new_project_src that are online
 ORDER BY
   s.geom <-> u.geom            -- k-NN search via GiST / R-Tree
 LIMIT 5;

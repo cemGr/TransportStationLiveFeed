@@ -1,108 +1,107 @@
-
 services:
+  # ──────────────── PostGIS Database ───────────────────
   db:
-    image: postgis/postgis:15-3.3        # PostGIS-Image basierend auf PostgreSQL 15, PostGIS 3.3
-    container_name: pg_postgis
+    image: postgis/postgis:15-3.3
+    container_name: bike_postgis
     restart: unless-stopped
     environment:
-      POSTGRES_USER: radverkehr           # DB-User
-      POSTGRES_PASSWORD: passwort123  
-      POSTGRES_DB: radstationen           # Datenbankname
+      POSTGRES_USER: bikeshare_admin
+      POSTGRES_PASSWORD: pass1234
+      POSTGRES_DB: bikeshare
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./initdb:/docker-entrypoint-initdb.d   # <- hier werden alle *.sql beim Erst-Run ausgeführt
+      - ./initdb:/docker-entrypoint-initdb.d
       - ./data:/data
     ports:
-      - "5432:5432"                       # Exponiere Port 5432 beim Host
+      - "5432:5432"
 
-  #  pgAdmin zum Verwalten via Web-GUI (http://localhost:8080)
+  # ──────────────── pgAdmin UI ─────────────────────────
   pgadmin:
     image: dpage/pgadmin4:7.5
     container_name: pgadmin
     restart: unless-stopped
+    env_file: .env
     environment:
-      PGADMIN_DEFAULT_EMAIL: grafcem98@gmail.com
-      PGADMIN_DEFAULT_PASSWORD: passwort123
-    ports:
-      - "8080:80"
+      PGADMIN_DEFAULT_EMAIL: thomas@zehetbauer.name
+      PGADMIN_DEFAULT_PASSWORD: admin1234
     volumes:
       - pgadmindata:/var/lib/pgadmin
-
-  scraper:
-    build: .
-    container_name: scraper
-    command: >
-      python -m src.scraper.scraper --kind geojson --dir ./scraper_data/live --interval 60
-    volumes:
-      - ./scraper_data:/app/scraper_data
-    environment:
-      PGHOST: db
-      PGPORT: 5432
-      PGUSER: radverkehr
-      PGPASSWORD: passwort123
-      PGDATABASE: radstationen
+    ports:
+      - "8080:80"
     depends_on:
       - db
 
+  # ──────────────── Station scraper ────────────────────
+  station_scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["-m", "new_project_src.scripts.run_station_ingest"]
+    env_file: .env
+    depends_on:
+      - db
+    volumes:
+      - ./data:/app/data
+
+  # ──────────────── Trip scraper ───────────────────────
   trip_scraper:
     build:
       context: .
-      dockerfile: Dockerfile.crawler
-    container_name: trip_scraper
-    command: >
-      python -m src.scraper.scraper --kind trip --dir ./scraper_data/trip_data
+      dockerfile: Dockerfile
+    command: ["-m", "new_project_src.scripts.run_trip_ingest"]
+    env_file: .env
+    depends_on:
+      - db
     volumes:
-      - ./scraper_data:/app/scraper_data
-    environment:
-      PGHOST: db
-      PGPORT: 5432
-      PGUSER: radverkehr
-      PGPASSWORD: passwort123
-      PGDATABASE: radstationen
+      - ./data:/app/data
+
+  # ──────────────── Live GeoJSON scraper ──────────────
+  live_geojson:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["-m", "new_project_src.scripts.run_live_geojson_ingest"]
+    env_file: .env
     depends_on:
       - db
+    volumes:
+      - ./data:/app/data
 
+  # ──────────────── Weather ingestion ──────────────────
   weather_service:
-    build: .
-    container_name: weather_service
-    command: >
-      sh -c "while true; do python -m src.weather_service; sleep 600; done"
-    environment:
-      PGHOST: db
-      PGPORT: 5432
-      PGUSER: radverkehr
-      PGPASSWORD: passwort123
-      PGDATABASE: radstationen
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["-m", "new_project_src.scripts.run_weather_ingest"]
+    env_file: .env
     depends_on:
       - db
+    volumes:
+      - ./data:/app/data
 
-  ui:
-      build:
-        context: .            # reuse repo root
-        dockerfile: Dockerfile   # see below
-      container_name: streamlit_ui
-      command: >
-        streamlit run src/main.py
-        --server.port=8501
-        --server.address=0.0.0.0
-        --server.headless=true
-      volumes:
-        - .:/app              # hot-reload while developing
-      environment:
-        # database connection (same as the workers)
-        PGHOST: db
-        PGPORT: 5432
-        PGUSER: radverkehr
-        PGPASSWORD: passwort123
-        PGDATABASE: radstationen
+  # ──────────────── Streamlit UI ───────────────────────
+  streamlit:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    # override the ENTRYPOINT so we use the streamlit binary
+    entrypoint: [ "streamlit" ]
+    command:
+      - run
+      - new_project_src/streamlit/main.py
+      - --server.port=8501
+      - --server.address=0.0.0.0
+    env_file: .env
+    depends_on:
+      - db
+    ports:
+      - "8501:8501"
+    volumes:
+      - ./new_project_src/streamlit:/app/new_project_src/streamlit
+      - staticfiles:/app/staticfiles
+      - ./data:/app/data
 
-        # OpenRouteService – put this in a .env file so it’s not in git
-        ORS_API_KEY: ${ORS_API_KEY}
-
-      ports:
-        - "8501:8501"         # browse http://localhost:8501
-      depends_on:
-        - db
 volumes:
   pgdata:
   pgadmindata:
+  staticfiles:
