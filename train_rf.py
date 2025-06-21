@@ -8,16 +8,22 @@ from sklearn.pipeline import Pipeline
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from joblib import dump
 
-TARGET_COL = "bikes_taken"  # change if your target column has a different name
 CSV_PATH = "trips_for_model.csv"
+TARGET_COL = "bikes_taken"  # change if your target column has a different name
+TIMESTAMP_COL = "slot_ts"
 
 def main() -> None:
     # ------------------------------------------------------------------ 1. Load
-    df = pd.read_csv(CSV_PATH, parse_dates=["slot_ts"])
+    df = pd.read_csv(CSV_PATH, low_memory=False)
+    if TIMESTAMP_COL not in df.columns:
+        raise ValueError(
+            f"Timestamp column '{TIMESTAMP_COL}' not found. Available columns: {list(df.columns)}"
+        )
+    df[TIMESTAMP_COL] = pd.to_datetime(df[TIMESTAMP_COL])
 
     # --------------------------------------------------------- 2. Feature eng.
-    df["hour"] = df["slot_ts"].dt.hour
-    df["weekday"] = df["slot_ts"].dt.dayofweek
+    df["hour"] = df[TIMESTAMP_COL].dt.hour
+    df["weekday"] = df[TIMESTAMP_COL].dt.dayofweek
     df["is_weekend"] = df["weekday"].isin([5, 6])
 
     cat_cols = [
@@ -30,7 +36,7 @@ def main() -> None:
     ]
     # Use all remaining columns except the target and timestamp as numeric features
     num_cols = [
-        c for c in df.columns if c not in cat_cols + [TARGET_COL, "slot_ts"]
+        c for c in df.columns if c not in cat_cols + [TARGET_COL, TIMESTAMP_COL]
     ]
 
     preproc = ColumnTransformer(
@@ -42,7 +48,7 @@ def main() -> None:
     )
 
     # ----------------------------------------------------------- 3. Time split
-    df = df.sort_values("slot_ts")
+    df = df.sort_values(TIMESTAMP_COL)
     n = len(df)
     n_train = int(n * 0.70)
     n_val = int(n * 0.15)
