@@ -35,9 +35,11 @@ def main() -> None:
         "is_weekend",
     ]
     # Use all remaining columns except the target and timestamp as numeric features
-    num_cols = [
-        c for c in df.columns if c not in cat_cols + [TARGET_COL, TIMESTAMP_COL]
-    ]
+    num_cols = (
+        df.select_dtypes(include=["number", "bool"])
+        .columns.difference(cat_cols + [TARGET_COL, TIMESTAMP_COL])
+        .tolist()
+    )
 
     preproc = ColumnTransformer(
         [
