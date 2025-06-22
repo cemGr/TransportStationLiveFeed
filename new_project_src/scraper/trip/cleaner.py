@@ -11,12 +11,6 @@ __all__ = ["TripCleaner"]
 
 
 class TripCleaner:
-    """
-    Clean one *raw* Metro ZIP-extracted trip CSV and emit a `*.clean.csv`.
-
-    The logic is 1-for-1 ported from the old `clean_trip_csv()` function – only
-    wrapped in an OO façade so we can unit-test and reuse it easily.
-    """
 
     # columns we drop completely
     _DROP_COLS = {
@@ -40,9 +34,6 @@ class TripCleaner:
 
         self.out_csv = self.dest / self.raw.with_suffix(".clean.csv").name
 
-    # ────────────────────────────────────────────────────────────────────────
-    # public API
-
     def clean(self) -> Path | None:
         if self.out_csv.exists():
             return None
@@ -50,7 +41,6 @@ class TripCleaner:
         trips = self._read()
         trips = self._canonicalise_headers(trips)
 
-        # ─── skip files that clearly aren't trip tables ───
         required = {
             "duration", "start_time", "end_time",
             "start_station", "end_station",
@@ -65,7 +55,6 @@ class TripCleaner:
             )
             return None
 
-        # extract digits, cast to pandas nullable Int64, drop rows without digits
         trips["bike_id"] = (
             trips["bike_id"]
                 .astype(str)
@@ -74,7 +63,6 @@ class TripCleaner:
         )
         trips = trips.dropna(subset=["bike_id"])
 
-        # now continue with your existing pipeline
         trips = self._parse_datetimes(trips)
         trips = self._create_imputation_flags(trips)
         trips = self._impute_times(trips)
@@ -101,10 +89,6 @@ class TripCleaner:
         print("✓ cleaned", self.raw.name, "→", self.out_csv.name)
         return self.out_csv
 
-
-    # ────────────────────────────────────────────────────────────────────────
-    # private helpers
-
     def _read(self) -> pd.DataFrame:
         df = pd.read_csv(self.raw, encoding=ENCODING, low_memory=False)
         df.columns = df.columns.str.strip()  # old _strip_cols
@@ -127,7 +111,6 @@ class TripCleaner:
         df["end_time"] = pd.to_datetime(df["end_time"], format="%m/%d/%Y %H:%M", errors="coerce")
         return df
 
-    # flag scaffold
     def _create_imputation_flags(self, df: pd.DataFrame) -> pd.DataFrame:
         flags = [
             "duration_imputed",
@@ -141,7 +124,6 @@ class TripCleaner:
             df[f] = False
         return df
 
-    # ——— imputations ———
     def _impute_times(self, df: pd.DataFrame) -> pd.DataFrame:
         m = df["duration"].isna()
         df.loc[m, "duration"] = (
@@ -165,7 +147,6 @@ class TripCleaner:
     def _impute_coords(self, trips: pd.DataFrame) -> pd.DataFrame:
         import warnings
 
-        # load station coords once
         station_df = (
             pd.read_csv(self.station, encoding=ENCODING)
             .rename(columns=lambda c: c.strip())
@@ -177,7 +158,6 @@ class TripCleaner:
             ("start_station", "start_lat", "start_lon", "start_coord_imputed"),
             ("end_station", "end_lat", "end_lon", "end_coord_imputed"),
         ]:
-            # skip if this quarter’s CSV doesn’t even have those columns
             if id_col not in trips.columns or lat_col not in trips.columns or lon_col not in trips.columns:
                 warnings.warn(f"Skipping coord imputation: missing columns {id_col}, {lat_col}, or {lon_col}")
                 continue
@@ -186,7 +166,6 @@ class TripCleaner:
             if not mask.any():
                 continue
 
-            # flag and fill
             trips.loc[mask, flag_col] = True
             trips.loc[mask, lat_col] = trips.loc[mask, id_col].map(lat_map)
             trips.loc[mask, lon_col] = trips.loc[mask, id_col].map(lon_map)

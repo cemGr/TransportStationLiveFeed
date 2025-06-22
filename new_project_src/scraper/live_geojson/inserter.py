@@ -7,15 +7,10 @@ from new_project_src.models.live_station import LiveStationStatus
 from new_project_src.models.station      import Station
 
 class LiveGeoJSONInserter:
-    """
-    Upsert every feature in the cleaned GeoJSON into live_station_status,
-    but only for station_ids that already exist in the static stations table.
-    """
     def __init__(self, clean_json: Path):
         self.clean_json = clean_json
 
     def upsert(self) -> int:
-        # 1) load features
         data = json.loads(self.clean_json.read_text(encoding="utf-8"))
         raw_rows = []
         for feat in data.get("features", []):
@@ -29,18 +24,15 @@ class LiveGeoJSONInserter:
             })
 
         with get_session() as session:
-            # 2) fetch all known station_ids
             known = {
                 id_ for (id_,) in session.query(Station.station_id).all()
             }
 
-            # 3) filter out any unknown kiosks
             rows = [r for r in raw_rows if r["station_id"] in known]
             if not rows:
                 print("⚠ No matching station_ids found in static table; skipping upsert")
                 return 0
 
-            # 4) bulk upsert
             stmt = insert(LiveStationStatus).values(rows)
             update_cols = {
                 c.name: c

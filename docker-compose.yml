@@ -56,7 +56,7 @@ services:
       - ./data:/app/data
 
   # ──────────────── Live GeoJSON scraper ──────────────
-  live_geojson:
+  live_geojson_scraper:
     build:
       context: .
       dockerfile: Dockerfile
@@ -68,7 +68,7 @@ services:
       - ./data:/app/data
 
   # ──────────────── Weather ingestion ──────────────────
-  weather_service:
+  weather_scraper:
     build:
       context: .
       dockerfile: Dockerfile

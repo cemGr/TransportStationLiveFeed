@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, Float, String, Boolean, TIMESTAMP
-from core.db import Base
+from core.base import Base
 
 class StationWeather(Base):
     __tablename__ = "station_weather"

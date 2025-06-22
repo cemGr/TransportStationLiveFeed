@@ -1,9 +1,11 @@
+from typing import Optional, ClassVar
+
 from sqlalchemy import Column, Integer, String, Float, Boolean
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
-from geoalchemy2 import Geography
+from geoalchemy2 import Geometry
 from sqlalchemy.orm import relationship
 
-from core.db import Base
+from core.base import Base
 
 class Station(Base):
     __tablename__ = "stations"
@@ -12,10 +14,12 @@ class Station(Base):
     name = Column(String)
     longitude = Column(DOUBLE_PRECISION)
     latitude = Column(DOUBLE_PRECISION)
-    num_bikes = Column(Integer)
-    num_docks = Column(Integer)
-    online = Column(Boolean, nullable=False)
-    geom = Column(Geography(geometry_type="POINT", srid=4326))
+    geom = Column(Geometry(geometry_type="POINT", srid=4326))
+
+    distance_m: ClassVar[float | None] = None
+    num_bikes: ClassVar[int | None] = None
+    num_docks: ClassVar[int | None] = None
+    online: ClassVar[bool | None] = None
 
     live_statuses = relationship(
         "LiveStationStatus",

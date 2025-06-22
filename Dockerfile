@@ -6,7 +6,8 @@ WORKDIR /app
 
 # 2) ensure logs are unbuffered
 ENV PYTHONUNBUFFERED=1 \
-    PIP_NO_CACHE_DIR=1
+    PIP_NO_CACHE_DIR=1 \
+    PYTHONPATH=/app
 
 # 3) system deps for Postgres & building wheels
 RUN apt-get update \

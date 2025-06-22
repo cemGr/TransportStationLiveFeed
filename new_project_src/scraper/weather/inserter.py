@@ -6,11 +6,6 @@ from core.db import get_session
 from new_project_src.models.weather import StationWeather
 
 class WeatherInserter:
-    """
-    Upsert the aggregated DataFrame into station_weather with
-    ON CONFLICT (slot_ts, station_id) DO UPDATE.
-    """
-
     def __init__(self, agg_df: pd.DataFrame):
         self.agg = agg_df
 

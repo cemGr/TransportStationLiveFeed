@@ -19,9 +19,6 @@ class StationInserter:
                     name       = r["Kiosk Name"],
                     longitude  = r["Longitude"],
                     latitude   = r["Latitude"],
-                    num_bikes  = r.get("BikesAvailable"),   # present only in GeoJSON live
-                    num_docks  = r.get("DocksAvailable") or r.get("Total Docks"),
-                    online     = (str(r.get("Status","")).lower() == "active"),
                     geom       = WKTElement(f"POINT({r['Longitude']} {r['Latitude']})", srid=4326)
                 )
                 for r in rows

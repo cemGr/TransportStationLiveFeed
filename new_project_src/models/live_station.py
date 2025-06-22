@@ -1,7 +1,8 @@
 from sqlalchemy import Column, Integer, Boolean, TIMESTAMP, func, ForeignKey
 from sqlalchemy.orm import relationship
-from core.db import Base
-from new_project_src.models.station import Station
+
+from core.base import Base
+
 
 class LiveStationStatus(Base):
     __tablename__ = "live_station_status"

@@ -4,10 +4,7 @@ CREATE TABLE public.stations (
   name         TEXT,
   longitude    DOUBLE PRECISION,
   latitude     DOUBLE PRECISION,
-  num_bikes    INTEGER,
-  num_docks    INTEGER,
-  online       BOOLEAN NOT NULL,
-  geom         GEOGRAPHY(Point, 4326)
+  geom         GEOMETRY(Point, 4326)
 );
 
 -- trips table with bike_id as TEXT and foreign-keys

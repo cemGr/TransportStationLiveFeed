@@ -2,16 +2,9 @@ import pandas as pd
 from sklearn.cluster import KMeans  # fallback stub if missing
 
 class WeatherAggregator:
-    """
-    Compute hourly station + weather aggregates:
-      - bikes_taken, bikes_returned per station/hour
-      - mean temperature, mean rain, weather mode, is_raining, temp_class
-      - cluster_id, season, hour_of_day, weekday, is_weekend
-    """
 
     @staticmethod
     def aggregate(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame:
-        # prepare trips
         df = trips.copy()
         df["slot_ts"]    = df["start_time"].dt.floor("h")
         df["hour_of_day"]= df["slot_ts"].dt.hour
@@ -34,7 +27,6 @@ class WeatherAggregator:
         else:
             stations["cluster_id"] = []
 
-        # bikes taken / returned
         taken = (
             df.groupby(["slot_ts", "start_station"])
               .size()
@@ -53,7 +45,6 @@ class WeatherAggregator:
         ).fillna({"bikes_taken":0,"bikes_returned":0})
         agg[["bikes_taken","bikes_returned"]] = agg[["bikes_taken","bikes_returned"]].astype(int)
 
-        # prepare weather
         weather["slot_ts"] = weather["time"].dt.floor("h")
         wh = (
             weather.groupby("slot_ts")
@@ -72,7 +63,6 @@ class WeatherAggregator:
             return "hot"
         wh["temp_class"] = wh["temperature_2m"].apply(temp_class)
 
-        # merge all
         agg = (
             agg.merge(stations, on="station_id", how="left")
                .merge(wh, on="slot_ts", how="left")

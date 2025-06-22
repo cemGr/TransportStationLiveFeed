@@ -8,11 +8,6 @@ from retry_requests import retry
 from new_project_src.bikemetro.constants import API_URL, BATCH_SIZE
 
 class WeatherFetcher:
-    """
-    Given a DataFrame of trips, fetch hourly weather from Open-Meteo
-    for each unique (lat, lon) between min and max trip dates.
-    """
-
     def __init__(self, trips_df: pd.DataFrame):
         self.trips = trips_df
 
