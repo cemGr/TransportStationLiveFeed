@@ -11,7 +11,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.append(str(REPO_ROOT))
 
-from src.db import query_nearest_stations
+from infrastructure.db import query_nearest_stations
 
 st.title("🚲 Available stations with bikes nearby")
 

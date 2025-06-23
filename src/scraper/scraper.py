@@ -27,8 +27,8 @@ if __package__ is None:
     sys.path.append(str(Path(__file__).resolve().parents[2]))
 
 from src.data_processor.data_processor import clean_trip_csv, clean_station_csv
-from src.db.connection import open_connection
-from src.db.loaders import upsert_stations_from_json, insert_trips_from_csv
+from infrastructure.db.connection import open_connection
+from infrastructure.db.loaders import upsert_stations_from_json, insert_trips_from_csv
 
 
 # ------------------------------------------------------------------ ENUM & CONFIG

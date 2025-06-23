@@ -173,11 +173,11 @@ LIMIT 5;
 ```
 
 ### Python helper
-The `src/db` package provides a small helper to execute the same k-NN query
+The `infrastructure/db` package provides a small helper to execute the same k-NN query
 directly from Python:
 
 ```python
-from src.db import query_nearest_stations
+from infrastructure.db import query_nearest_stations
 
 stations = query_nearest_stations(latitude=52.52, longitude=13.4, k=5)
 for row in stations:

@@ -18,7 +18,7 @@ if str(REPO_ROOT) not in sys.path:
 # ────────────────────────────────────────────────────────────────────────────────
 try:
     # When the DB container is available
-    from src.db import query_nearest_stations, query_nearest_docks
+    from infrastructure.db import query_nearest_stations, query_nearest_docks
 except Exception:
     print("failed to import DB helpers")
     # # Development/off‑line mode – use STR‑tree lookup
