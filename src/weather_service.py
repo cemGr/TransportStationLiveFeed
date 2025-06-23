@@ -25,7 +25,7 @@ except Exception:  # pragma: no cover - optional dependency
         def fit_predict(self, X):
             return [0] * len(X)
 
-from .db import open_connection
+from infrastructure.db import open_connection
 
 API_URL = "https://archive-api.open-meteo.com/v1/archive"
 BATCH_SIZE = 50

@@ -10,7 +10,7 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.append(str(REPO_ROOT))
 
-from src.db import query_nearest_docks
+from infrastructure.db import query_nearest_docks
 
 st.title("🚏 Available stations with free docks nearby")
 

@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from src.db.loaders import upsert_stations_from_json, insert_trips_from_csv
+from infrastructure.db.loaders import upsert_stations_from_json, insert_trips_from_csv
 
 
 def sample_geojson(tmp_path: Path) -> Path:
