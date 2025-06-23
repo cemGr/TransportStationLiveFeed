@@ -8,4 +8,4 @@ st.set_page_config(
 )
 
 st.title("🏠 Home")
-st.write("Willkommen bei deinem Transport-Projekt!")
+st.write("Welcome to your transport project!")

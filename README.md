@@ -115,9 +115,9 @@ upsert the station data into the PostgreSQL database.
 ```bash
 docker compose up -d
 ```
-After the database is running, the Streamlit UI will be able to connect via the
-default credentials. If you see a message like `Datenbankverbindung
-fehlgeschlagen`, ensure this container is running and accessible on port `5432`.
+After the database is running, the Streamlit UI will be able to connect using the
+default credentials. If you see a message like `database connection failed`,
+ensure this container is running and accessible on port `5432`.
 
 ### 2. Connect to the database  
 ```bash
@@ -252,16 +252,15 @@ create a python file in the src/page folder. It will be automatical added to the
 
 ## OpenRouteService Notebook
 
-In `jupyter/openrouteservice_demo.ipynb` findest du ein Beispiel, das mithilfe
-von [openrouteservice](https://openrouteservice.org/) und Folium die Distanz
-und Route zwischen zwei Koordinaten sowohl zu Fuß als auch mit dem Fahrrad
-berechnet und auf einer Karte anzeigt. Die Koordinaten und die ermittelten
-Distanzen werden in einem Pandas-DataFrame gespeichert. Um das Notebook
-auszuführen, musst du einen gültigen API-Key über die Umgebungsvariable
-`ORS_API_KEY` bereitstellen, z.B.:
+`jupyter/openrouteservice_demo.ipynb` contains an example that uses
+[openrouteservice](https://openrouteservice.org/) and Folium to calculate
+walking and cycling routes between two coordinates and display them on a map.
+The coordinates and calculated distances are stored in a Pandas DataFrame. To
+run the notebook you must provide a valid API key via the environment variable
+`ORS_API_KEY`, e.g.:
 
 ```bash
-export ORS_API_KEY="<dein-key>"
+export ORS_API_KEY="<your-key>"
 ```
 
 ## Train the Random Forest model

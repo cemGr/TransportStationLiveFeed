@@ -15,5 +15,5 @@ def open_connection():
         )
     except psycopg2.OperationalError as e:  # pragma: no cover - runtime feedback
         raise RuntimeError(
-            "Datenbankverbindung fehlgeschlagen. Ist die Datenbank gestartet?"
+            "Database connection failed. Is the database running?"
         ) from e
