@@ -82,7 +82,7 @@ services:
         dockerfile: Dockerfile   # see below
       container_name: streamlit_ui
       command: >
-        streamlit run src/main.py
+        streamlit run presentation/main.py
         --server.port=8501
         --server.address=0.0.0.0
         --server.headless=true

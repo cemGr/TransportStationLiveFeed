@@ -5,7 +5,7 @@ CREATE TABLE public.stations (
   latitude     DOUBLE PRECISION,
   num_bikes    INTEGER,
   num_docks    INTEGER,
-  online       BOOLEAN NOT NULL,                     -- NEUE SPALTE
+  online       BOOLEAN NOT NULL,                     -- new column
   geom         GEOGRAPHY(Point, 4326)
 );
 
