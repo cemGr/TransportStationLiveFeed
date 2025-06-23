@@ -263,3 +263,16 @@ auszuführen, musst du einen gültigen API-Key über die Umgebungsvariable
 ```bash
 export ORS_API_KEY="<dein-key>"
 ```
+
+## Train the Random Forest model
+
+`train_rf.py` trains a baseline Random Forest on aggregated hourly data.
+Place your preprocessed dataset `trips_for_model.csv` in the project root and
+run:
+
+```bash
+python train_rf.py
+```
+
+The script prints MAE/RMSE metrics and saves the tuned model to
+`rf_hourly.pkl`.
