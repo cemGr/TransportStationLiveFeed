@@ -268,10 +268,12 @@ export ORS_API_KEY="<dein-key>"
 
 `train_rf.py` trains a baseline Random Forest on aggregated hourly data.
 Place your preprocessed dataset `trips_for_model.csv` in the project root and
-run:
+choose which target column to predict using the `--target` option (default
+`bikes_taken`). Valid choices are `bikes_taken`, `bikes_returned` and
+`net_usage` (returns minus rentals).
 
 ```bash
-python train_rf.py
+python train_rf.py --target net_usage
 ```
 
 The script prints MAE/RMSE metrics and saves the tuned model to
