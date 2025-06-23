@@ -267,8 +267,8 @@ export ORS_API_KEY="<dein-key>"
 ## Train the Random Forest model
 
 `train_rf.py` trains a baseline Random Forest on aggregated hourly data.
-Place your preprocessed dataset `trips_for_model.csv` in the project root and
-run:
+Place your preprocessed dataset `trips_for_model.csv` (or the zipped
+`trips_for_model.zip`) in the project root and run:
 
 ```bash
 python train_rf.py
@@ -276,3 +276,11 @@ python train_rf.py
 
 The script prints MAE/RMSE metrics and saves the tuned model to
 `rf_hourly.pkl`.
+
+To also predict bike returns and obtain the net bike usage you can run
+`train_rf_dual.py`.  This script fits two Random Forest models – one for bikes
+checked out and one for bikes returned – and stores both models as
+`rf_bikes_taken.pkl` and `rf_bikes_returned.pkl`.  It uses cyclical encoding for
+hour and weekday and adds per-station lag and rolling mean features to better
+capture short-term usage patterns.  Net bike usage metrics are written to
+`evaluation_net.txt`.
