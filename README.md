@@ -276,3 +276,21 @@ python train_rf.py
 
 The script prints MAE/RMSE metrics and saves the tuned model to
 `rf_hourly.pkl`.
+
+## Train the Gradient Boosting model
+
+`train_gb.py` uses XGBoost to forecast bike demand. Metrics are written to
+`xgb_evaluation_metrics.txt` and the trained model is saved as `xgb_model.pkl`.
+Ensure `trips_for_model.csv` is available in the project root and run:
+
+```bash
+python train_gb.py
+```
+
+To estimate how long the training will take on your machine, run
+`estimate_runtime.py` which fits the model on a small sample and extrapolates the
+runtime for the full dataset:
+
+```bash
+python estimate_runtime.py
+```
