@@ -287,9 +287,10 @@ Ensure `trips_for_model.csv` is available in the project root and run:
 python train_gb.py
 ```
 
-To estimate how long the training will take on your machine, run
-`estimate_runtime.py` which fits the model on a small sample and extrapolates the
-runtime for the full dataset:
+To get an approximate idea of the training time you can run
+`estimate_runtime.py`.  The script fits the model on a few small samples
+and performs a linear regression on the measured runtimes to estimate the
+time required for the full dataset:
 
 ```bash
 python estimate_runtime.py
