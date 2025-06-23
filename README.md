@@ -6,17 +6,27 @@ nearest station based on available devices, e.g. bikes, scooters, etc.
  Kas input, find K nearest bike/scooter stations where docks are available.
  3. Given a source and destination location, for example, Los Angeles, present
  the route on Google maps or another mapping product of a person using
- Metro bike
+Metro bike
+
+## Project structure
+
+```
+domain/          # core entities and interfaces
+usecases/        # application logic
+infrastructure/  # database and external services
+presentation/    # Streamlit UI (entry point in `presentation/main.py`)
+src/             # supporting scripts like the scraper
+tests/           # pytest suite
+```
 
 ## Installation
 
 ```bash
 python3 -m venv .venv
-source .venv/bin/activate
-.venv\Scripts\activate
-pip install --upgrade pip 
+source .venv/bin/activate  # on Windows use `.venv\\Scripts\\activate`
+pip install --upgrade pip
 pip install -r requirements.txt
-streamlit run src/main.py
+streamlit run presentation/main.py
 ```
 
 ```bash
@@ -78,14 +88,14 @@ station data into the database.
 
 ## Docker
 
-1. **Build the image**  
+1. **Build the image**
    ```bash
    docker build -t transport-app .
    ```
 
-2. **Run the container**
+2. **Run the UI**
    ```bash
-   docker run --rm -p 8501:8501 transport-app
+   docker compose up ui
    ```
 
 ### Scraper via Docker
@@ -230,7 +240,7 @@ about the most recent ingestion run.
 ## Pytest
 
 ```bash
-pytest -q
+pytest -q  # run from the repository root
 
 ```
 
@@ -247,7 +257,7 @@ The CI pipeline runs these commands automatically.
 
 ## Want to add a new Page?
 ```
-create a python file in the src/page folder. It will be automatical added to the ui.
+Create a Python file in `presentation/pages`. It will be automatically added to the UI.
 ```
 
 ## OpenRouteService Notebook
