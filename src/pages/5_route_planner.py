@@ -93,23 +93,23 @@ st.title("🚴‍♂️ Bike‑Share Route Planner")
 
 api_key = _get_api_key()
 if not api_key:
-    st.warning("Bitte erst einen OpenRouteService‑API‑Key speichern (⚙️ Einstellungen oder Environment‐Variable `ORS_API_KEY`).")
+    st.warning("Please store an OpenRouteService API key first (⚙️ Settings or environment variable `ORS_API_KEY`).")
     st.stop()
 
 # ─────────── input form ───────────
 with st.form("route_form"):
-    st.markdown("### Startkoordinaten (Ihr Standort)")
+    st.markdown("### Start coordinates (your location)")
     c1, c2 = st.columns(2)
     start_lat = c1.number_input("Latitude", value=34.05, format="%.5f")
     start_lon = c2.number_input("Longitude", value=-118.25, format="%.5f")
 
-    st.markdown("### Zielkoordinaten")
+    st.markdown("### Destination coordinates")
     c3, c4 = st.columns(2)
     dest_lat = c3.number_input("Latitude ", value=34.06, format="%.5f")
     dest_lon = c4.number_input("Longitude ", value=-118.24, format="%.5f")
 
-    k = st.number_input("Anzahl nächster Stationen", min_value=1, value=5, step=1)
-    submitted = st.form_submit_button("Stationen suchen")
+    k = st.number_input("Number of nearby stations", min_value=1, value=5, step=1)
+    submitted = st.form_submit_button("Find stations")
 
 # state machine: 0‑nothing, 1‑choose stations, 2‑show route
 if "step" not in st.session_state:
@@ -120,14 +120,14 @@ if submitted:
         origin_opts = query_nearest_stations(latitude=start_lat, longitude=start_lon, k=int(k))
         dest_opts = query_nearest_docks(latitude=dest_lat, longitude=dest_lon, k=int(k))
     except Exception as exc:
-        st.error(f"Fehler bei der Stationsabfrage: {exc}")
+        st.error(f"Error while querying stations: {exc}")
         st.stop()
 
     if not origin_opts:
-        st.error("Keine Stationen mit Bikes in der Nähe des Starts gefunden.")
+        st.error("No stations with bikes near the start were found.")
         st.stop()
     if not dest_opts:
-        st.error("Keine Stationen mit freien Docks am Ziel gefunden.")
+        st.error("No stations with free docks near the destination were found.")
         st.stop()
 
     st.session_state["origin_candidates"] = origin_opts
@@ -136,7 +136,7 @@ if submitted:
 
 # ─────────── station selection ───────────
 if st.session_state.get("step") == 1:
-    st.subheader("1️⃣ Stationen auswählen")
+    st.subheader("1️⃣ Select stations")
 
     origin_sel = {
         f"{row['name']} (≈{row['distance_m']:.0f} m | {row.get('num_bikes', '–')} Bikes)": row
@@ -148,17 +148,17 @@ if st.session_state.get("step") == 1:
     }
 
     sc1, sc2 = st.columns(2)
-    origin_choice = sc1.selectbox("Start‑Station", list(origin_sel.keys()))
-    dest_choice = sc2.selectbox("Ziel‑Station", list(dest_sel.keys()))
+    origin_choice = sc1.selectbox("Start station", list(origin_sel.keys()))
+    dest_choice = sc2.selectbox("Destination station", list(dest_sel.keys()))
 
-    if st.button("Route berechnen 🚀"):
+    if st.button("Calculate route 🚀"):
         st.session_state["origin_station"] = origin_sel[origin_choice]
         st.session_state["dest_station"] = dest_sel[dest_choice]
         st.session_state["step"] = 2
 
 # ─────────── build & display map ───────────
 if st.session_state.get("step") == 2:
-    st.subheader("2️⃣ Optimale Route")
+    st.subheader("2️⃣ Optimal route")
 
     client = _get_ors_client(api_key)
 
@@ -173,7 +173,7 @@ if st.session_state.get("step") == 2:
         bike = _make_route(client, [[s_station[1], s_station[0]], [d_station[1], d_station[0]]], profile="cycling-regular")
         walk2 = _make_route(client, [[d_station[1], d_station[0]], [user_dest[1], user_dest[0]]], profile="foot-walking")
     except Exception as exc:
-        st.error(f"OpenRouteService‑Anfrage fehlgeschlagen: {exc}")
+        st.error(f"OpenRouteService request failed: {exc}")
         st.stop()
 
     m_center = [(user_start[0] + user_dest[0]) / 2, (user_start[1] + user_dest[1]) / 2]
@@ -181,19 +181,19 @@ if st.session_state.get("step") == 2:
 
     # markers
     folium.Marker(user_start, tooltip="Start", icon=folium.Icon(color="red")).add_to(m)
-    folium.Marker(user_dest, tooltip="Ziel", icon=folium.Icon(color="darkred")).add_to(m)
-    folium.Marker(s_station, tooltip=f"Start‑Station: {st.session_state['origin_station']['name']}", icon=folium.Icon(color="blue")).add_to(m)
-    folium.Marker(d_station, tooltip=f"Ziel‑Station: {st.session_state['dest_station']['name']}", icon=folium.Icon(color="green")).add_to(m)
+    folium.Marker(user_dest, tooltip="Destination", icon=folium.Icon(color="darkred")).add_to(m)
+    folium.Marker(s_station, tooltip=f"Start station: {st.session_state['origin_station']['name']}", icon=folium.Icon(color='blue')).add_to(m)
+    folium.Marker(d_station, tooltip=f"Destination station: {st.session_state['dest_station']['name']}", icon=folium.Icon(color='green')).add_to(m)
 
     # routes
-    _add_route(m, walk1, tooltip="Fußweg ➀", color="orange")
-    _add_route(m, bike, tooltip="Radstrecke", color="blue")
-    _add_route(m, walk2, tooltip="Fußweg ➁", color="orange")
+    _add_route(m, walk1, tooltip="Walk ➀", color="orange")
+    _add_route(m, bike, tooltip="Bike segment", color="blue")
+    _add_route(m, walk2, tooltip="Walk ➁", color="orange")
 
     st_folium(m, width=900, height=600)
 
     with st.expander("Details"):
         st.markdown(
-            f"* **Start‑Station:** {st.session_state['origin_station']['name']} «{st.session_state['origin_station']['distance_m']:.0f} m»\n"
-            f"* **Ziel‑Station:** {st.session_state['dest_station']['name']} «{st.session_state['dest_station']['distance_m']:.0f} m»"
+            f"* **Start station:** {st.session_state['origin_station']['name']} «{st.session_state['origin_station']['distance_m']:.0f} m»\n"
+            f"* **Destination station:** {st.session_state['dest_station']['name']} «{st.session_state['dest_station']['distance_m']:.0f} m»"
         )

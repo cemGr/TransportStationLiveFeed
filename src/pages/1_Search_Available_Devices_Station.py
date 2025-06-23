@@ -32,7 +32,7 @@ if submitted:
         )
         st.session_state["user_loc"] = (lat, lon)
     except Exception as e:  # pragma: no cover - UI feedback
-        st.error(f"Datenbankverbindung fehlgeschlagen: {e}")
+        st.error(f"Database connection failed: {e}")
 
 if st.session_state["nearest_bikes"]:
     lat, lon = st.session_state["user_loc"]
@@ -44,7 +44,7 @@ if st.session_state["nearest_bikes"]:
     st.table(df[["name", "num_bikes", "distance_m"]])
 
     m = folium.Map(location=[lat, lon], zoom_start=13)
-    folium.Marker([lat, lon], tooltip="Sie", icon=folium.Icon(color="red")).add_to(m)
+    folium.Marker([lat, lon], tooltip="You", icon=folium.Icon(color="red")).add_to(m)
     for row in result:
         folium.Marker(
             [row["latitude"], row["longitude"]],
