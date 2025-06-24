@@ -1,4 +1,7 @@
 import os
+import sys
+from pathlib import Path
+
 import streamlit as st
 import folium
 from dotenv import load_dotenv
@@ -6,7 +9,9 @@ from streamlit_folium import st_folium
 import openrouteservice as ors
 
 # Ensure the repository root is on the import path so absolute imports work
-from presentation.common import REPO_ROOT  # noqa: F401
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.append(str(_REPO_ROOT))
 
 from infrastructure.db import DBStationRepository
 from usecases.stations import find_nearest_stations, find_nearest_docks
