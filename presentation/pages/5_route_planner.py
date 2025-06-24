@@ -17,11 +17,13 @@ def _get_ors_client(api_key: str) -> ors.Client:
 
 def _make_route(
     client: ors.Client, coords: list[list[float]], profile: str
-) -> list[list[float]]:
-    """Call ORS directions and return decoded lat/lon pairs."""
+) -> tuple[list[list[float]], float]:
+    """Return decoded lat/lon pairs and duration in minutes."""
     data = client.directions(coords, profile=profile, format="geojson")
     geometry = data["features"][0]["geometry"]["coordinates"]  # lon/lat pairs
-    return [[lat, lon] for lon, lat in geometry]
+    duration_s = data["features"][0]["properties"]["summary"]["duration"]
+    points = [[lat, lon] for lon, lat in geometry]
+    return points, duration_s / 60  # minutes
 
 
 def _add_route(map_: folium.Map, points: list[list[float]], tooltip: str, color: str):
@@ -107,6 +109,45 @@ if st.session_state.get("step") == 1:
         st.session_state["dest_station"] = dest_sel[dest_choice]
         st.session_state["step"] = 2
 
+    if st.button("Suggest fastest option"):
+        client = _get_ors_client(api_key)
+        with st.spinner("Searching fastest route..."):
+            best_dur = float("inf")
+            best_o = None
+            best_d = None
+            for o in origin_sel.values():
+                for d in dest_sel.values():
+                    try:
+                        _, t1 = _make_route(
+                            client,
+                            [[start_lon, start_lat], [o["longitude"], o["latitude"]]],
+                            profile="foot-walking",
+                        )
+                        _, t2 = _make_route(
+                            client,
+                            [[o["longitude"], o["latitude"]], [d["longitude"], d["latitude"]]],
+                            profile="cycling-regular",
+                        )
+                        _, t3 = _make_route(
+                            client,
+                            [[d["longitude"], d["latitude"]], [dest_lon, dest_lat]],
+                            profile="foot-walking",
+                        )
+                        dur = t1 + t2 + t3
+                        if dur < best_dur:
+                            best_dur = dur
+                            best_o = o
+                            best_d = d
+                    except Exception:
+                        continue
+        if best_o and best_d:
+            st.session_state["origin_station"] = best_o
+            st.session_state["dest_station"] = best_d
+            st.session_state["step"] = 2
+            st.success(
+                f"Fastest option selected: {best_o['name']} → {best_d['name']} (≈{best_dur:.1f} min)"
+            )
+
 if st.session_state.get("step") == 2:
     st.subheader("2️⃣ Optimal route")
 
@@ -124,21 +165,22 @@ if st.session_state.get("step") == 2:
     ]
 
     try:
-        walk1 = _make_route(
+        walk1, dur1 = _make_route(
             client,
             [[user_start[1], user_start[0]], [s_station[1], s_station[0]]],
             profile="foot-walking",
         )
-        bike = _make_route(
+        bike, dur2 = _make_route(
             client,
             [[s_station[1], s_station[0]], [d_station[1], d_station[0]]],
             profile="cycling-regular",
         )
-        walk2 = _make_route(
+        walk2, dur3 = _make_route(
             client,
             [[d_station[1], d_station[0]], [user_dest[1], user_dest[0]]],
             profile="foot-walking",
         )
+        total_duration = dur1 + dur2 + dur3
     except Exception as exc:
         st.error(f"OpenRouteService request failed: {exc}")
         st.stop()
@@ -170,5 +212,6 @@ if st.session_state.get("step") == 2:
     with st.expander("Details"):
         st.markdown(
             f"* **Start station:** {st.session_state['origin_station']['name']} «{st.session_state['origin_station']['distance_m']:.0f} m»\n"
-            f"* **Destination station:** {st.session_state['dest_station']['name']} «{st.session_state['dest_station']['distance_m']:.0f} m»"
+            f"* **Destination station:** {st.session_state['dest_station']['name']} «{st.session_state['dest_station']['distance_m']:.0f} m»\n"
+            f"* **Estimated travel time:** {total_duration:.1f} min"
         )
