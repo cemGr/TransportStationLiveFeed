@@ -26,7 +26,7 @@ RUN pip install --upgrade pip \
 COPY . .
 
 # 6) expose Streamlit’s default port
-EXPOSE 8501
+EXPOSE 8003
 
 # 7) default entrypoint so we can override with `command:` in compose
 ENTRYPOINT ["python"]

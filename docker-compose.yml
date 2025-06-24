@@ -98,7 +98,7 @@ services:
     depends_on:
       - db
     ports:
-      - "8501:8501"
+      - "8003:8003"
     volumes:
       - ./new_project_src/streamlit:/app/new_project_src/streamlit
       - staticfiles:/app/staticfiles
