@@ -1,30 +1,30 @@
-import sys
-from pathlib import Path
-
+from presentation.common import REPO_ROOT
 import streamlit as st
 import pandas as pd
 import folium
 from streamlit_folium import st_folium
 
-# Ensure the repository root is on the Python path so the src package resolves
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.append(str(REPO_ROOT))
+from usecases.stations import find_k_nearest_stations
 
-from src.datastructure.rtree import find_k_nearest_stations
 
 @st.cache_data
 def load_stations() -> pd.DataFrame:
     data_path = REPO_ROOT / "jupyter" / "cleaned_station_data.csv"
     df = pd.read_csv(data_path)
-    df = df.rename(columns={"Kiosk Name": "StationName", "Latitude": "start_lat", "Longitude": "start_long"})
+    df = df.rename(
+        columns={
+            "Kiosk Name": "StationName",
+            "Latitude": "start_lat",
+            "Longitude": "start_long",
+        }
+    )
     df = df[df["Status"] == "Active"].reset_index(drop=True)
     return df[["StationName", "start_lat", "start_long"]]
 
-# Load station data once so it is immediately available to the form.
+
 stations_df = load_stations()
 
-st.title("🚏 Find nearest stations")
+st.title("\U0001f68f Find nearest stations")
 
 if "nearest" not in st.session_state:
     st.session_state["nearest"] = None
@@ -47,6 +47,8 @@ if st.session_state["nearest"] is not None:
     m = folium.Map(location=[lat, lon], zoom_start=13)
     folium.Marker([lat, lon], tooltip="Start").add_to(m)
     for _, row in nearest.iterrows():
-        folium.Marker([row.start_lat, row.start_long], tooltip=row.StationName).add_to(m)
+        folium.Marker([row.start_lat, row.start_long], tooltip=row.StationName).add_to(
+            m
+        )
 
     st_folium(m, width=700, height=500)
