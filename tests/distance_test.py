@@ -1,4 +1,3 @@
-import pytest
 from src.distance import calc_air_distance_p_to_p
 
 class TestAirDistances:

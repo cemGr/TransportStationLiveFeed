@@ -1,6 +1,6 @@
-from typing import Optional, ClassVar
+from typing import ClassVar
 
-from sqlalchemy import Column, Integer, String, Float, Boolean
+from sqlalchemy import Column, Integer, String
 from sqlalchemy.dialects.postgresql import DOUBLE_PRECISION
 from geoalchemy2 import Geometry
 from sqlalchemy.orm import relationship

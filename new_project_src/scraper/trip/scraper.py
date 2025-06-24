@@ -1,5 +1,7 @@
 from __future__ import annotations
-import re, zipfile, shutil
+import re
+import zipfile
+import shutil
 from pathlib import Path
 import requests
 

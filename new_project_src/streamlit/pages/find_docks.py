@@ -1,4 +1,3 @@
-import maps
 import streamlit as st
 import folium
 from new_project_src.models.location import Location

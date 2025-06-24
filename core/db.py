@@ -1,8 +1,7 @@
 from contextlib import contextmanager
 from sqlalchemy import create_engine
-from sqlalchemy.orm import scoped_session, sessionmaker, declarative_base
+from sqlalchemy.orm import scoped_session, sessionmaker
 import os
-import new_project_src.models  # noqa: E402
 DATABASE_URL = os.getenv("DATABASE_URL")   # already set in .env / docker-compose
 
 engine = create_engine(DATABASE_URL, pool_pre_ping=True, future=True)

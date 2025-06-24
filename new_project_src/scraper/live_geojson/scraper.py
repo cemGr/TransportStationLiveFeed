@@ -2,7 +2,7 @@ from __future__ import annotations
 from pathlib import Path
 import requests
 
-from new_project_src.bikemetro.constants import DATA_PAGE, HEADERS, TIMEOUT
+from new_project_src.bikemetro.constants import HEADERS
 from new_project_src.bikemetro.helpers import get_soup, first_href, stream_download
 
 from new_project_src.scraper.live_geojson.cleaner  import LiveGeoJSONCleaner

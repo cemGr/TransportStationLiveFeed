@@ -57,9 +57,12 @@ class WeatherAggregator:
         )
         wh["is_raining"] = wh["rain_mm"] >= 0.1
         def temp_class(t: float) -> str:
-            if t < 10: return "cold"
-            if t < 20: return "mid"
-            if t < 28: return "warm"
+            if t < 10:
+                return "cold"
+            if t < 20:
+                return "mid"
+            if t < 28:
+                return "warm"
             return "hot"
         wh["temp_class"] = wh["temperature_2m"].apply(temp_class)
 

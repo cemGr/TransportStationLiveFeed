@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 from typing import Tuple
 
 import folium
@@ -14,7 +13,7 @@ from core.db import get_session
 from new_project_src.models.location import Location
 from new_project_src.models.station import Station
 from new_project_src.services.route_planner import RoutePlanner
-from new_project_src.streamlit.utils import maps, widgets
+from new_project_src.streamlit.utils import maps
 
 
 # ───────────────────────── helpers ──────────────────────────
