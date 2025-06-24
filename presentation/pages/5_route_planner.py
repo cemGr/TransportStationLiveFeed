@@ -16,47 +16,8 @@ if str(REPO_ROOT) not in sys.path:
 # ────────────────────────────────────────────────────────────────────────────────
 # Local imports (database helpers + offline fallback)
 # ────────────────────────────────────────────────────────────────────────────────
-try:
-    # When the DB container is available
-    from infrastructure.db import query_nearest_stations, query_nearest_docks
-except Exception:
-    print("failed to import DB helpers")
-    # # Development/off‑line mode – use STR‑tree lookup
-    # from src.datastructure.rtree import find_k_nearest_stations as _offline_knn
-    #
-    # @st.cache_data
-    # def _load_station_snapshot() -> pd.DataFrame:
-    #     """Load cleaned station snapshot shipped with the repo (offline mode)."""
-    #     data_path = REPO_ROOT / "jupyter" / "cleaned_station_data.csv"
-    #     df = pd.read_csv(data_path)
-    #     df = df.rename(
-    #         columns={
-    #             "Kiosk Name": "name",
-    #             "Latitude": "latitude",
-    #             "Longitude": "longitude",
-    #             "Status": "status",
-    #         }
-    #     )
-    #     return df[df["status"] == "Active"].reset_index(drop=True)
-    #
-    # _STATIONS_FALLBACK = _load_station_snapshot()
-    #
-    # def query_nearest_stations(latitude: float, longitude: float, k: int = 5):
-    #     df = _offline_knn(_STATIONS_FALLBACK, latitude, longitude, k)
-    #     return [
-    #         {
-    #             "station_id": None,
-    #             "name": row.StationName,
-    #             "longitude": row.start_long,
-    #             "latitude": row.start_lat,
-    #             "distance_m": row.distance,
-    #             "num_bikes": None,
-    #         }
-    #         for row in df.itertuples(index=False)
-    #     ]
-    #
-    # # For docks we just re‑use the same distance‑only fallback
-    # query_nearest_docks = query_nearest_stations  # type: ignore
+from infrastructure.db import DBStationRepository
+from usecases.stations import find_nearest_stations, find_nearest_docks
 
 # ────────────────────────────────────────────────────────────────────────────────
 # Helper functions
@@ -117,8 +78,9 @@ if "step" not in st.session_state:
 
 if submitted:
     try:
-        origin_opts = query_nearest_stations(latitude=start_lat, longitude=start_lon, k=int(k))
-        dest_opts = query_nearest_docks(latitude=dest_lat, longitude=dest_lon, k=int(k))
+        with DBStationRepository() as repo:
+            origin_opts = find_nearest_stations(repo, latitude=start_lat, longitude=start_lon, k=int(k))
+            dest_opts = find_nearest_docks(repo, latitude=dest_lat, longitude=dest_lon, k=int(k))
     except Exception as exc:
         st.error(f"Error while querying stations: {exc}")
         st.stop()

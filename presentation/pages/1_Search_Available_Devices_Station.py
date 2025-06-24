@@ -11,7 +11,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.append(str(REPO_ROOT))
 
-from infrastructure.db import query_nearest_stations
+from infrastructure.db import DBStationRepository
+from usecases.stations import find_nearest_stations
 
 st.title("🚲 Available stations with bikes nearby")
 
@@ -27,9 +28,10 @@ with st.form("bike_search"):
 
 if submitted:
     try:
-        st.session_state["nearest_bikes"] = query_nearest_stations(
-            latitude=lat, longitude=lon, k=int(k)
-        )
+        with DBStationRepository() as repo:
+            st.session_state["nearest_bikes"] = find_nearest_stations(
+                repo, latitude=lat, longitude=lon, k=int(k)
+            )
         st.session_state["user_loc"] = (lat, lon)
     except Exception as e:  # pragma: no cover - UI feedback
         st.error(f"Database connection failed: {e}")

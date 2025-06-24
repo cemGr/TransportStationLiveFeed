@@ -10,7 +10,8 @@ REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.append(str(REPO_ROOT))
 
-from infrastructure.db import query_nearest_docks
+from infrastructure.db import DBStationRepository
+from usecases.stations import find_nearest_docks
 
 st.title("🚏 Available stations with free docks nearby")
 
@@ -26,9 +27,10 @@ with st.form("dock_search"):
 
 if submitted:
     try:
-        st.session_state["nearest_docks"] = query_nearest_docks(
-            latitude=lat, longitude=lon, k=int(k)
-        )
+        with DBStationRepository() as repo:
+            st.session_state["nearest_docks"] = find_nearest_docks(
+                repo, latitude=lat, longitude=lon, k=int(k)
+            )
         st.session_state["user_loc"] = (lat, lon)
     except Exception as e:  # pragma: no cover - UI feedback
         st.error(f"Database connection failed: {e}")
