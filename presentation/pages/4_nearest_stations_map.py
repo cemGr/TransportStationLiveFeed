@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+# Ensure the repository root is on the import path so absolute imports work
+_REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.append(str(_REPO_ROOT))
+
 from presentation.common import REPO_ROOT
 import streamlit as st
 import pandas as pd
