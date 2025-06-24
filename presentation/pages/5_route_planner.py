@@ -123,31 +123,69 @@ if st.session_state.get("step") == 1:
             best_dur = float("inf")
             best_o = None
             best_d = None
+
+            walk_start_cache: dict[tuple[float, float, float, float], float] = {}
+            walk_end_cache: dict[tuple[float, float, float, float], float] = {}
+            bike_cache: dict[tuple[float, float, float, float], float] = {}
+
             for o in origin_sel.values():
-                for d in dest_sel.values():
+                start_key = (start_lon, start_lat, o["longitude"], o["latitude"])
+                if start_key not in walk_start_cache:
                     try:
                         _, t1 = _make_route(
                             client,
                             [[start_lon, start_lat], [o["longitude"], o["latitude"]]],
                             profile="foot-walking",
                         )
-                        _, t2 = _make_route(
-                            client,
-                            [[o["longitude"], o["latitude"]], [d["longitude"], d["latitude"]]],
-                            profile="cycling-regular",
-                        )
-                        _, t3 = _make_route(
-                            client,
-                            [[d["longitude"], d["latitude"]], [dest_lon, dest_lat]],
-                            profile="foot-walking",
-                        )
-                        dur = t1 + t2 + t3
-                        if dur < best_dur:
-                            best_dur = dur
-                            best_o = o
-                            best_d = d
                     except Exception:
-                        continue
+                        t1 = float("inf")
+                    walk_start_cache[start_key] = t1
+                else:
+                    t1 = walk_start_cache[start_key]
+
+                for d in dest_sel.values():
+                    bike_key = (
+                        o["longitude"],
+                        o["latitude"],
+                        d["longitude"],
+                        d["latitude"],
+                    )
+                    if bike_key not in bike_cache:
+                        try:
+                            _, t2 = _make_route(
+                                client,
+                                [[o["longitude"], o["latitude"]], [d["longitude"], d["latitude"]]],
+                                profile="cycling-regular",
+                            )
+                        except Exception:
+                            t2 = float("inf")
+                        bike_cache[bike_key] = t2
+                    else:
+                        t2 = bike_cache[bike_key]
+
+                    end_key = (d["longitude"], d["latitude"], dest_lon, dest_lat)
+                    if end_key not in walk_end_cache:
+                        try:
+                            _, t3 = _make_route(
+                                client,
+                                [[d["longitude"], d["latitude"]], [dest_lon, dest_lat]],
+                                profile="foot-walking",
+                            )
+                        except Exception:
+                            t3 = float("inf")
+                        walk_end_cache[end_key] = t3
+                    else:
+                        t3 = walk_end_cache[end_key]
+
+                    t1 = walk_start_cache[start_key]
+                    t2 = bike_cache[bike_key]
+                    t3 = walk_end_cache[end_key]
+
+                    dur = t1 + t2 + t3
+                    if dur < best_dur:
+                        best_dur = dur
+                        best_o = o
+                        best_d = d
         if best_o and best_d:
             st.session_state["origin_station"] = best_o
             st.session_state["dest_station"] = best_d
