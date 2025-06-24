@@ -1,5 +1,3 @@
-from pathlib import Path
-import time
 
 import pandas as pd
 from sqlalchemy import select, func
@@ -27,12 +25,13 @@ class WeatherScraper:
                 Trip.start_station, Trip.start_lat, Trip.start_lon,
                 Trip.end_station,   Trip.end_lat,   Trip.end_lon
             )
-            if last_ts:
+            if last_ts is not None:
                 stmt = stmt.where(Trip.start_time > last_ts)
+
             trips = session.execute(stmt).mappings().all()
 
         if not trips:
-            print("ℹ️ No new trips since", last_ts)
+            print("ℹ️ No new trips")
             return
 
         trips_df = pd.DataFrame(trips)
