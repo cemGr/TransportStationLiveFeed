@@ -104,12 +104,12 @@ if st.session_state.get("step") == 1:
     origin_choice = sc1.selectbox("Start station", list(origin_sel.keys()))
     dest_choice = sc2.selectbox("Destination station", list(dest_sel.keys()))
 
-    if st.button("Calculate route 🚀"):
+    if st.button("Calculate route 🚀", key="calc_route"):
         st.session_state["origin_station"] = origin_sel[origin_choice]
         st.session_state["dest_station"] = dest_sel[dest_choice]
         st.session_state["step"] = 2
 
-    if st.button("Suggest fastest option"):
+    if st.button("Suggest fastest option", key="fastest_option"):
         client = _get_ors_client(api_key)
         with st.spinner("Searching fastest route..."):
             best_dur = float("inf")
