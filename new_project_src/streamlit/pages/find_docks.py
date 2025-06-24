@@ -5,18 +5,13 @@ from new_project_src.services.nearest_station_with_docks import (
     nearest_stations_with_docks,
 )
 from new_project_src.streamlit.utils import widgets, maps
-from streamlit_autorefresh import st_autorefresh
 st.header("🅿️ Find Nearest Docks")
 
 # ───────────────────────── user inputs ──────────────────────────
 with st.form("find_docks"):
     lat, lon = widgets.lat_lon_input("Your current location", (34.0522, -118.2437))
     k = st.slider("Number of stations (K)", 1, 20, 5)
-    auto_refresh = st.checkbox("Auto-refresh every minute", value=True)
     submit = st.form_submit_button("Search")
-
-if auto_refresh:
-    st_autorefresh(interval=60_000, key="docks_live_refresh")
 
 # ───────────────────────── results / map ─────────────────────────
 if submit:

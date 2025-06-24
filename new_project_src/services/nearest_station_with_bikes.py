@@ -7,7 +7,7 @@ from new_project_src.models.station import Station
 from new_project_src.models.location import Location
 
 
-def nearest_stations_with_bikes(location: Location, k: int = 5) -> list[Station]:
+def nearest_stations_with_bikes(location: Location, k: int = 5, stations_with_missing_live_data: bool = False) -> list[Station]:
     """
     Return up to k Station objects (online, with >0 bikes), sorted by distance.
     Each Station will have a .distance_m attribute set.
@@ -22,18 +22,25 @@ def nearest_stations_with_bikes(location: Location, k: int = 5) -> list[Station]
                 LiveStationStatus.online,
                 ST_DistanceSphere(Station.geom, pt).label("distance_m"),
             )
-            .join(  # ← tie into the live snapshot
+            .outerjoin(
                 LiveStationStatus,
                 LiveStationStatus.station_id == Station.station_id,
             )
-            .filter(
+            .order_by(ST_DistanceSphere(Station.geom, pt))
+        )
+
+        if not stations_with_missing_live_data:
+            query = query.filter(
                 LiveStationStatus.online.is_(True),
                 LiveStationStatus.num_bikes > 0,
             )
-            .order_by(ST_DistanceSphere(Station.geom, pt))
-            .limit(k)
-        )
-        rows = query.all()
+        else:
+            query = query.filter(
+                (LiveStationStatus.station_id.is_(None)) |
+                ((LiveStationStatus.online.is_(True)) & (LiveStationStatus.num_bikes > 0))
+            )
+
+        rows = query.limit(k).all()
 
     stations: list[Station] = []
     for station, bikes, docks, online, dist in rows:

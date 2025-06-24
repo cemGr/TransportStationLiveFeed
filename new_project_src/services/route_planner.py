@@ -63,11 +63,13 @@ class RoutePlanner:
         starting_location: Location,
         destination: Location,
         k: int,
+        stations_with_missing_live_data: bool = False,
     ) -> Tuple[List[Any], List[Any]]:
         """Return k nearest bike-out and dock-in stations or raise."""
         origins = nearest_stations_with_bikes(
             starting_location,
             k,
+            stations_with_missing_live_data
         )
         if not origins:
             raise NoBikeStationError()
@@ -75,6 +77,7 @@ class RoutePlanner:
         docks = nearest_stations_with_docks(
             destination,
             k,
+            stations_with_missing_live_data
         )
         if not docks:
             raise NoDockStationError()
@@ -167,13 +170,14 @@ class RoutePlanner:
         self,
         starting_location: Location,
         destination: Location,
-        k: int = 5,
+        k: int = 3,
+        stations_with_missing_live_data: bool = False,
     ) -> RoutePlan:
         """
         Public API: returns a complete RoutePlan or raises a RoutePlannerError.
         """
         try:
-            origins, docks = self._fetch_nearby_stations(starting_location, destination, k)
+            origins, docks = self._fetch_nearby_stations(starting_location, destination, k, stations_with_missing_live_data)
             origins, docks = self._adjust_for_credits(
                 origins, docks, starting_location, destination
             )

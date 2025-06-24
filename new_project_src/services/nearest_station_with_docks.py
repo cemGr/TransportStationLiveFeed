@@ -7,7 +7,7 @@ from new_project_src.models.station import Station
 
 
 def nearest_stations_with_docks(
-        location: Location, k: int = 5
+        location: Location, k: int = 5, stations_with_missing_live_data: bool = False
 ) -> list[Station]:
     """
     Return up to k Station objects (online, with >0 docks), sorted by distance.
@@ -23,18 +23,25 @@ def nearest_stations_with_docks(
                 LiveStationStatus.online,
                 ST_DistanceSphere(Station.geom, pt).label("distance_m"),
             )
-            .join(
+            .outerjoin(
                 LiveStationStatus,
                 LiveStationStatus.station_id == Station.station_id,
             )
-            .filter(
-                LiveStationStatus.online.is_(True),
-                LiveStationStatus.num_docks > 0,
-            )
             .order_by(ST_DistanceSphere(Station.geom, pt))
-            .limit(k)
         )
-        rows = query.all()
+
+        if not stations_with_missing_live_data:
+            query = query.filter(
+                LiveStationStatus.online.is_(True),
+                LiveStationStatus.num_bikes > 0,
+            )
+        else:
+            query = query.filter(
+                (LiveStationStatus.station_id.is_(None)) |
+                ((LiveStationStatus.online.is_(True)) & (LiveStationStatus.num_bikes > 0))
+            )
+
+        rows = query.limit(k).all()
 
     stations: list[Station] = []
     for station, bikes, docks, online, dist in rows:
