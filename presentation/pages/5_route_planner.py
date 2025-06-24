@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 from streamlit_folium import st_folium
 import openrouteservice as ors
 
+# Ensure the repository root is on the import path so absolute imports work
+from presentation.common import REPO_ROOT  # noqa: F401
+
 from infrastructure.db import DBStationRepository
 from usecases.stations import find_nearest_stations, find_nearest_docks
 
