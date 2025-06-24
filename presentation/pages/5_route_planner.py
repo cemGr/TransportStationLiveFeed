@@ -108,6 +108,11 @@ if st.session_state.get("step") == 1:
         for row in st.session_state["dest_candidates"]
     }
 
+    origin_coords = [
+        [row["longitude"], row["latitude"]] for row in origin_sel.values()
+    ]
+    dest_coords = [[row["longitude"], row["latitude"]] for row in dest_sel.values()]
+
     sc1, sc2 = st.columns(2)
     origin_choice = sc1.selectbox("Start station", list(origin_sel.keys()))
     dest_choice = sc2.selectbox("Destination station", list(dest_sel.keys()))
@@ -119,73 +124,55 @@ if st.session_state.get("step") == 1:
 
     if st.button("Suggest fastest option", key="fastest_option"):
         client = _get_ors_client(api_key)
+        matrix = getattr(client, "matrix", client.distance_matrix)
         with st.spinner("Searching fastest route..."):
+            origins = list(origin_sel.values())
+            dests = list(dest_sel.values())
+            start_coords = [[o["longitude"], o["latitude"]] for o in origins]
+            end_coords = [[d["longitude"], d["latitude"]] for d in dests]
+
+            try:
+                start_walk = matrix(
+                    locations=[[start_lon, start_lat], *start_coords],
+                    profile="foot-walking",
+                    sources=[0],
+                    destinations=list(range(1, len(start_coords) + 1)),
+                    metrics=["duration"],
+                )["durations"][0]
+
+                end_walk_res = matrix(
+                    locations=[*end_coords, [dest_lon, dest_lat]],
+                    profile="foot-walking",
+                    sources=list(range(len(end_coords))),
+                    destinations=[len(end_coords)],
+                    metrics=["duration"],
+                )
+                end_walk = [row[0] for row in end_walk_res["durations"]]
+
+                bike_res = matrix(
+                    locations=[*start_coords, *end_coords],
+                    profile="cycling-regular",
+                    sources=list(range(len(start_coords))),
+                    destinations=list(range(len(start_coords), len(start_coords) + len(end_coords))),
+                    metrics=["duration"],
+                )
+                bike_dur = bike_res["durations"]
+            except Exception as exc:
+                st.error(f"OpenRouteService request failed: {exc}")
+                st.stop()
+
             best_dur = float("inf")
             best_o = None
             best_d = None
 
-            walk_start_cache: dict[tuple[float, float, float, float], float] = {}
-            walk_end_cache: dict[tuple[float, float, float, float], float] = {}
-            bike_cache: dict[tuple[float, float, float, float], float] = {}
-
-            for o in origin_sel.values():
-                start_key = (start_lon, start_lat, o["longitude"], o["latitude"])
-                if start_key not in walk_start_cache:
-                    try:
-                        _, t1 = _make_route(
-                            client,
-                            [[start_lon, start_lat], [o["longitude"], o["latitude"]]],
-                            profile="foot-walking",
-                        )
-                    except Exception:
-                        t1 = float("inf")
-                    walk_start_cache[start_key] = t1
-                else:
-                    t1 = walk_start_cache[start_key]
-
-                for d in dest_sel.values():
-                    bike_key = (
-                        o["longitude"],
-                        o["latitude"],
-                        d["longitude"],
-                        d["latitude"],
-                    )
-                    if bike_key not in bike_cache:
-                        try:
-                            _, t2 = _make_route(
-                                client,
-                                [[o["longitude"], o["latitude"]], [d["longitude"], d["latitude"]]],
-                                profile="cycling-regular",
-                            )
-                        except Exception:
-                            t2 = float("inf")
-                        bike_cache[bike_key] = t2
-                    else:
-                        t2 = bike_cache[bike_key]
-
-                    end_key = (d["longitude"], d["latitude"], dest_lon, dest_lat)
-                    if end_key not in walk_end_cache:
-                        try:
-                            _, t3 = _make_route(
-                                client,
-                                [[d["longitude"], d["latitude"]], [dest_lon, dest_lat]],
-                                profile="foot-walking",
-                            )
-                        except Exception:
-                            t3 = float("inf")
-                        walk_end_cache[end_key] = t3
-                    else:
-                        t3 = walk_end_cache[end_key]
-
-                    t1 = walk_start_cache[start_key]
-                    t2 = bike_cache[bike_key]
-                    t3 = walk_end_cache[end_key]
-
-                    dur = t1 + t2 + t3
+            for i, o in enumerate(origins):
+                for j, d in enumerate(dests):
+                    dur = (start_walk[i] + bike_dur[i][j] + end_walk[j]) / 60
                     if dur < best_dur:
                         best_dur = dur
                         best_o = o
                         best_d = d
+
         if best_o and best_d:
             st.session_state["origin_station"] = best_o
             st.session_state["dest_station"] = best_d
