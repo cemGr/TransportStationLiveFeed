@@ -36,7 +36,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["-m", "new_project_src.scripts.run_station_ingest"]
+    command: ["-m", "src.scripts.run_station_ingest"]
     env_file: .env
     depends_on:
       - db
@@ -48,7 +48,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["-m", "new_project_src.scripts.run_trip_ingest"]
+    command: ["-m", "src.scripts.run_trip_ingest"]
     env_file: .env
     depends_on:
       - db
@@ -61,7 +61,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["-m", "new_project_src.scripts.run_live_geojson_ingest"]
+    command: ["-m", "src.scripts.run_live_geojson_ingest"]
     env_file: .env
     depends_on:
       - db
@@ -74,7 +74,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    command: ["-m", "new_project_src.scripts.run_weather_ingest"]
+    command: ["-m", "src.scripts.run_weather_ingest"]
     env_file: .env
     depends_on:
       - db
@@ -91,7 +91,7 @@ services:
     entrypoint: [ "streamlit" ]
     command:
       - run
-      - new_project_src/streamlit/main.py
+      - src/streamlit/main.py
       - --server.port=8501
       - --server.address=0.0.0.0
     env_file: .env
@@ -100,7 +100,7 @@ services:
     ports:
       - "8003:8003"
     volumes:
-      - ./new_project_src/streamlit:/app/new_project_src/streamlit
+      - ./src/streamlit:/app/src/streamlit
       - staticfiles:/app/staticfiles
       - ./data:/app/data
 
