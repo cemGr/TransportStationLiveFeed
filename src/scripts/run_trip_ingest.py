@@ -9,6 +9,6 @@ if __name__ == "__main__":
         try:
             scraper.run_once()
         except Exception as exc:
-            print("⚠ TripScraper failed:", exc, flush=True)
+            print("⚠️ TripScraper failed:", exc, flush=True)
             traceback.print_exc()
         time.sleep(24 * 3600)

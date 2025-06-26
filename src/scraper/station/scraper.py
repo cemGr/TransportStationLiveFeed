@@ -23,7 +23,7 @@ class StationScraper:
             soup    = get_soup(sess)
             csv_url = first_href(soup, "Station Table")
             if not csv_url:
-                print("⚠ Station-table link not found")
+                print("⚠️ Station-table link not found")
                 return
 
             raw_path = self.RAW_DIR / Path(csv_url).name
@@ -33,9 +33,9 @@ class StationScraper:
         cleaner = StationCleaner(raw_path, self.PROC_DIR)
         cleaned = cleaner.clean()
         if not cleaned:
-            print("ℹ️ Cleaned CSV already exists, skipping")
+            print("Cleaned CSV already exists, skipping")
             cleaned = self.PROC_DIR / "cleaned_station_data.csv"
 
         inserter = StationInserter(cleaned)
         count    = inserter.upsert()
-        print(f"✓ Upserted {count} stations")
+        print(f"✅ Upserted {count} stations")

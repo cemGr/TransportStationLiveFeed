@@ -22,7 +22,7 @@ class TripInserter:
             ]
             dropped = len(rows) - len(valid)
             if dropped:
-                print(f"⚠ Dropped {dropped} trips with missing station references")
+                print(f"⚠️ Dropped {dropped} trips with missing station references")
 
             session.bulk_insert_mappings(Trip, valid)
             return len(valid)

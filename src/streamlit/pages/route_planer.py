@@ -29,7 +29,6 @@ def fetch_all_stations() -> list[Station]:
 
 @st.cache_data(ttl=60)
 def fetch_live_ids() -> set[int]:
-    """Return station_ids that have a LiveStationStatus row"""
     with get_session() as s:
         return {sid for (sid,) in s.query(LiveStationStatus.station_id).all()}
 

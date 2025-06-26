@@ -1,4 +1,3 @@
-# src/streamlit/main.py
 import streamlit as st
 
 st.set_page_config(
@@ -7,7 +6,6 @@ st.set_page_config(
     layout="wide",
 )
 
-# A tiny landing page – users mostly navigate via the sidebar anyway.
 st.title("🚲 Metro Bike Share Tools")
 st.markdown(
     """

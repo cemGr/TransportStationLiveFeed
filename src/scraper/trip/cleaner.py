@@ -91,7 +91,7 @@ class TripCleaner:
 
     def _read(self) -> pd.DataFrame:
         df = pd.read_csv(self.raw, encoding=ENCODING, low_memory=False)
-        df.columns = df.columns.str.strip()  # old _strip_cols
+        df.columns = df.columns.str.strip()
         return df
 
     @staticmethod

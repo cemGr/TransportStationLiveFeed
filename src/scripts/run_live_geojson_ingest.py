@@ -7,5 +7,5 @@ if __name__ == "__main__":
         try:
             scraper.run_once()
         except Exception as exc:
-            print("⚠ LiveGeoJSONScraper failed:", exc, flush=True)
-        time.sleep(60)  # every minute
+            print("⚠️ LiveGeoJSONScraper failed:", exc, flush=True)
+        time.sleep(60)

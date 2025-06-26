@@ -9,29 +9,33 @@ import requests
 import requests_cache
 from retry_requests import retry
 
-from src.bikemetro.constants import API_URL, BATCH_SIZE
+from src.bikemetro.constants import API_URL, BATCH_SIZE, MAX_SPAN_DAYS, RATE_LIMIT_SLEEP
 
-# ────────────────────────────────────────────────────────────────────────────
-MAX_SPAN_DAYS     = 14
-RATE_LIMIT_SLEEP  = 0.20
+
+# ────────────────────────────────────────────────────────────
+
 
 class WeatherFetcher:
     def __init__(self, trips_df: pd.DataFrame):
         self.trips = trips_df
+        print("[WeatherFetcher] ⚙️  Instance created with trips_df shape", trips_df.shape)
 
     def fetch(self) -> pd.DataFrame:
+        print("[WeatherFetcher] fetch()")
         if self.trips.empty:
+            print("[WeatherFetcher] No trips, returning empty frame")
             return self._empty_frame()
 
         start_date = self.trips["start_time"].min().date()
-        end_date   = self.trips["start_time"].max().date()
+        end_date = self.trips["start_time"].max().date()
+        print(f"[WeatherFetcher] Date range: {start_date} → {end_date}")
 
-        # unique start-station coordinates
         coords = list(
             self.trips[["start_lat", "start_lon"]]
             .drop_duplicates()
             .itertuples(index=False, name=None)
         )
+        print(f"[WeatherFetcher] Unique coords: {len(coords)}")
 
         session: requests.Session = retry(
             requests_cache.CachedSession("weather_cache", expire_after=3600)
@@ -39,11 +43,15 @@ class WeatherFetcher:
 
         frames: list[pd.DataFrame] = []
         for i in range(0, len(coords), BATCH_SIZE):
-            batch = coords[i : i + BATCH_SIZE]
+            batch = coords[i: i + BATCH_SIZE]
+            print(f"[WeatherFetcher] Batch {i // BATCH_SIZE + 1}: {len(batch)} coords")
             for d0, d1 in self._date_windows(start_date, end_date):
+                print(f"[WeatherFetcher]    📆 Window: {d0} → {d1}")
                 frames.append(self._fetch_window(session, batch, d0, d1))
 
-        return pd.concat(frames, ignore_index=True) if frames else self._empty_frame()
+        result = pd.concat(frames, ignore_index=True) if frames else self._empty_frame()
+        print("[WeatherFetcher] ✅ fetch() complete – result shape", result.shape)
+        return result
 
     @staticmethod
     def _date_windows(d0: date, d1: date):
@@ -57,22 +65,24 @@ class WeatherFetcher:
             cur = nxt + one
 
     def _fetch_window(
-        self,
-        session: requests.Session,
-        coords: List[Tuple[float, float]],
-        start_date: date,
-        end_date: date,
+            self,
+            session: requests.Session,
+            coords: List[Tuple[float, float]],
+            start_date: date,
+            end_date: date,
     ) -> pd.DataFrame:
+        print(f"[WeatherFetcher]      _fetch_window() {start_date} → {end_date} · coords={len(coords)}")
+
         lat = ",".join(f"{c[0]:.5f}" for c in coords)
         lon = ",".join(f"{c[1]:.5f}" for c in coords)
 
         params = {
-            "latitude":   lat,
-            "longitude":  lon,
+            "latitude": lat,
+            "longitude": lon,
             "start_date": start_date.strftime("%Y-%m-%d"),
-            "end_date":   end_date.strftime("%Y-%m-%d"),
-            "hourly":     "temperature_2m,rain,weathercode",
-            "timezone":   "UTC",
+            "end_date": end_date.strftime("%Y-%m-%d"),
+            "hourly": "temperature_2m,rain,weathercode",
+            "timezone": "UTC",
         }
 
         for attempt in range(3):
@@ -80,28 +90,28 @@ class WeatherFetcher:
             if r.status_code != 429:
                 break
             sleep_time = 2 ** attempt
+            print(f"[WeatherFetcher]        ⏳  429 rate-limited; sleeping {sleep_time}s (attempt {attempt + 1})")
             time.sleep(sleep_time)
         r.raise_for_status()
+        print("[WeatherFetcher]      API response OK")
 
         df = self._json_to_df(r.json())
+        print("[WeatherFetcher]      window df shape", df.shape)
         time.sleep(RATE_LIMIT_SLEEP)
         return df
 
     @staticmethod
     def _json_to_df(data) -> pd.DataFrame:
-        if isinstance(data, dict):
-            data = [data]
-
         rows = []
-        for item in data:
+        for item in (data if isinstance(data, list) else [data]):
             lat0 = item.get("latitude")
             lon0 = item.get("longitude")
             hourly = item.get("hourly", {})
             for t, temp, rain, code in zip(
-                hourly.get("time", []),
-                hourly.get("temperature_2m", []),
-                hourly.get("rain", []),
-                hourly.get("weathercode", []),
+                    hourly.get("time", []),
+                    hourly.get("temperature_2m", []),
+                    hourly.get("rain", []),
+                    hourly.get("weathercode", []),
             ):
                 rows.append(
                     {
@@ -113,8 +123,11 @@ class WeatherFetcher:
                         "weather_code": code,
                     }
                 )
-        return pd.DataFrame(rows)
+        df = pd.DataFrame(rows)
+        print("[WeatherFetcher]         _json_to_df produced shape", df.shape)
+        return df
 
+    # ------------------------------------------------------------------
     @staticmethod
     def _empty_frame() -> pd.DataFrame:
         return pd.DataFrame(

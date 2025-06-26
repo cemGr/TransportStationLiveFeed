@@ -31,7 +31,7 @@ class LiveGeoJSONInserter:
 
             rows = [r for r in raw_rows if r["station_id"] in known]
             if not rows:
-                print("⚠ No matching station_ids found in static table; skipping upsert")
+                print("⚠️ No matching station_ids found in static table; skipping upsert")
                 return 0
 
             # ---------- DEBUG: fetch current snapshot & print diffs ----------
@@ -63,11 +63,10 @@ class LiveGeoJSONInserter:
             )
             result = session.execute(stmt)
             count = result.rowcount or 0
-            print(f"✓ upserted {count} live-status rows")
+            print(f"✅ upserted {count} live-status rows")
             return count
 
     def _diff(self, old, new) -> str | None:
-        """Return a human-readable diff for one station or None when unchanged."""
         if old is None:
             return f"+ INSERT {new['station_id']}: {new}"
         changes = {

@@ -22,7 +22,7 @@ class LiveGeoJSONScraper:
             soup    = get_soup(sess)
             geo_url = first_href(soup, "GeoJSON")
             if not geo_url:
-                print("⚠ GeoJSON link not found on data page")
+                print("⚠️ GeoJSON link not found on data page")
                 return
 
             raw_path = self.RAW_DIR / Path(geo_url).name

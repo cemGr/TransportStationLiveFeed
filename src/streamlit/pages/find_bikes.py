@@ -6,7 +6,7 @@ from src.services.nearest_station_with_bikes import (
 )
 from src.streamlit.utils import widgets, maps
 
-st.header("🔎 Find Nearest Bikes")
+st.header("Find Nearest Bikes")
 
 with st.form("find_bikes"):
     lat, lon = widgets.lat_lon_input("Your location", default=(34.0522, -118.2437))

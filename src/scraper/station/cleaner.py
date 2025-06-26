@@ -24,5 +24,5 @@ class StationCleaner:
         df = df.drop(columns=["Go Live Date", "status2"], errors="ignore")
 
         df.to_csv(self.out_csv, index=False)
-        print(f"✓ cleaned station CSV → {self.out_csv}")
+        print(f"✅ cleaned station CSV → {self.out_csv}")
         return self.out_csv

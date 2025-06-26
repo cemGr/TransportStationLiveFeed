@@ -174,7 +174,7 @@ class RoutePlanner:
         stations_with_missing_live_data: bool = False,
     ) -> RoutePlan:
         """
-        Public API: returns a complete RoutePlan or raises a RoutePlannerError.
+        returns a complete RoutePlan or raises a RoutePlannerError.
         """
         try:
             origins, docks = self._fetch_nearby_stations(starting_location, destination, k, stations_with_missing_live_data)

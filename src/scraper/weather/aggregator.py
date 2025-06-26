@@ -1,15 +1,17 @@
 import pandas as pd
-from sklearn.cluster import KMeans  # fallback stub if missing
+from sklearn.cluster import KMeans
 
 class WeatherAggregator:
-
     @staticmethod
     def aggregate(trips: pd.DataFrame, weather: pd.DataFrame) -> pd.DataFrame:
+        print("[WeatherAggregator] ▶️  aggregate()")
         df = trips.copy()
-        df["slot_ts"]    = df["start_time"].dt.floor("h")
-        df["hour_of_day"]= df["slot_ts"].dt.hour
-        df["weekday_num"]= df["slot_ts"].dt.weekday
-        df["is_weekend"] = df["weekday_num"].isin([5, 6])
+        df["slot_ts"]     = df["start_time"].dt.floor("h")
+        df["hour_of_day"] = df["slot_ts"].dt.hour
+        df["weekday_num"] = df["slot_ts"].dt.weekday
+        df["is_weekend"]  = df["weekday_num"].isin([5, 6])
+
+        print("[WeatherAggregator] trips with derived cols shape", df.shape)
 
         # station coords + clustering
         stations = (
@@ -22,7 +24,9 @@ class WeatherAggregator:
               })
         )
         if not stations.empty:
-            kmeans = KMeans(n_clusters=min(80, len(stations)), random_state=0)
+            k = min(80, len(stations))
+            print(f"[WeatherAggregator] Clustering {len(stations)} stations into {k} clusters")
+            kmeans = KMeans(n_clusters=k, random_state=0)
             stations["cluster_id"] = kmeans.fit_predict(stations[["lat", "lon"]])
         else:
             stations["cluster_id"] = []
@@ -40,6 +44,8 @@ class WeatherAggregator:
               .rename(columns={"end_station":"station_id"})
         )
 
+        print("[WeatherAggregator] taken shape", taken.shape, "returned shape", returned.shape)
+
         agg = pd.merge(
             taken, returned, on=["slot_ts","station_id"], how="outer"
         ).fillna({"bikes_taken":0,"bikes_returned":0})
@@ -56,6 +62,7 @@ class WeatherAggregator:
                    .reset_index()
         )
         wh["is_raining"] = wh["rain_mm"] >= 0.1
+
         def temp_class(t: float) -> str:
             if t < 10:
                 return "cold"
@@ -66,12 +73,13 @@ class WeatherAggregator:
             return "hot"
         wh["temp_class"] = wh["temperature_2m"].apply(temp_class)
 
+        print("[WeatherAggregator] weather heuristics shape", wh.shape)
+
         agg = (
             agg.merge(stations, on="station_id", how="left")
-               .merge(wh, on="slot_ts", how="left")
+               .merge(wh,       on="slot_ts",   how="left")
         )
 
-        # season
         season_map = {
           12:"Winter",1:"Winter",2:"Winter",
           3:"Spring",4:"Spring",5:"Spring",
@@ -80,4 +88,6 @@ class WeatherAggregator:
         }
         agg["season"] = agg["slot_ts"].dt.month.map(season_map)
 
+        print("[WeatherAggregator] ✅ aggregate() complete – agg shape", agg.shape)
         return agg
+

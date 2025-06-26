@@ -18,5 +18,5 @@ class LiveGeoJSONCleaner:
             json.dump(out, f, ensure_ascii=False, indent=2, sort_keys=True)
             f.write("\n")
 
-        print(f"✓ cleaned GeoJSON → {self.cleaned.name}")
+        print(f"✅ cleaned GeoJSON → {self.cleaned.name}")
         return self.cleaned

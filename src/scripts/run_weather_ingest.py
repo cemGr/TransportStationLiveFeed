@@ -2,10 +2,10 @@ import time
 from src.scraper.weather.scraper import WeatherScraper
 
 if __name__ == "__main__":
-    ws = WeatherScraper()
+    weather_scraper = WeatherScraper()
     while True:
         try:
-            ws.run_once()
+            weather_scraper.run_once()
         except Exception as e:
-            print("⚠ WeatherScraper error:", e, flush=True)
-        time.sleep(10 * 60)   # every 10 minutes
+            print("⚠️ WeatherScraper error:", e, flush=True)
+        time.sleep(24 * 3600)

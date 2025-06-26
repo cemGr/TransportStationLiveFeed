@@ -15,5 +15,6 @@ TIMEOUT = 30
 
 # weather
 API_URL          = "https://archive-api.open-meteo.com/v1/archive"
-BATCH_SIZE       = 50
-TRIP_BATCH_SIZE  = 60000
+BATCH_SIZE       = 5
+MAX_SPAN_DAYS     = 14
+RATE_LIMIT_SLEEP  = 0.20

@@ -7,5 +7,5 @@ if __name__ == "__main__":
         try:
             scraper.run_once()
         except Exception as exc:
-            print("⚠", exc, flush=True)
-        time.sleep(60*60)        # run hourly
+            print("⚠️ Station Scraper Error", exc, flush=True)
+        time.sleep(60*60)
