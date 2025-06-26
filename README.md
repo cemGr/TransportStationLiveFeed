@@ -43,17 +43,6 @@ Copy `.env` and adjust as needed:
 - `ORS_API_KEY` – your OpenRouteService API key (required for the route planner).
 - `DATABASE_URL` – connection string used by the application and scrapers.
 
-
-
-## Repository structure
-
-- `core/` – SQLAlchemy base classes and DB helpers.
-- `src/models/` – ORM models for stations, trips, live status and weather.
-- `src/scraper/` – scrapers and loaders for all data sources.
-- `src/services/` – business logic such as nearest‑station queries and route planning.
-- `src/streamlit/` – Streamlit application.
-- `initdb/` – SQL scripts run when the database container is created.
-
 ## License
 
 This project is provided under the MIT License.

@@ -146,7 +146,7 @@ with col_opts:
     plan_btn = st.button("🚀 Plan route", disabled=not ready)
     if not ready:
         st.info(
-            "Click two points (or station markers) on the map to set *Start* and *Destination*."
+            "Click two points (or station markers) on the map to set *Start* and *Destination*. (third click to reset.)"
         )
 
 # ───────────────────────── Routing logic ────────────────────────────

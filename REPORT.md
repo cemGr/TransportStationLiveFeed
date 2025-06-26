@@ -208,8 +208,8 @@ class WeatherFetcher:
 class WeatherAggregator:
     @staticmethod
     def aggregate(trips, weather):
-        # join trips with hourly weather and compute statistics
-        ...
+        join trips with hourly weather and compute statistics
+        
 ```
 ```python
 class WeatherInserter:
