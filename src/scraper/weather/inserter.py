@@ -1,5 +1,4 @@
 import math
-import pandas as pd
 from sqlalchemy.dialects.postgresql import insert
 from core.db import get_session
 from src.models.weather import StationWeather

@@ -36,6 +36,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+    restart: unless-stopped
     command: ["-m", "src.scripts.run_station_ingest"]
     env_file: .env
     depends_on:
@@ -52,7 +53,7 @@ services:
     env_file: .env
     depends_on:
       - db
-      #- station_scraper
+      - station_scraper
     volumes:
       - ./data:/app/data
 
@@ -65,7 +66,7 @@ services:
     env_file: .env
     depends_on:
       - db
-      #- station_scraper
+      - station_scraper
     volumes:
       - ./data:/app/data
 
@@ -78,7 +79,7 @@ services:
     env_file: .env
     depends_on:
       - db
-      #- trip_scraper
+      - trip_scraper
     volumes:
       - ./data:/app/data
 
