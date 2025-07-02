@@ -80,8 +80,12 @@ def _fetch_batch(
         "hourly": "temperature_2m,rain,weathercode",
         "timezone": "UTC",
     }
-    r = session.get(API_URL, params=params)
-    r.raise_for_status()
+    try:
+        r = session.get(API_URL, params=params)
+        r.raise_for_status()
+    except requests.RequestException as exc:
+        logging.error("Weather API request failed: %s", exc)
+        raise RuntimeError("Weather API request failed") from exc
     data = r.json()
     if isinstance(data, dict):
         data = [data]
