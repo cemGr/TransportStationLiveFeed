@@ -1,4 +1,6 @@
 import zipfile
+import pytest
+import requests
 
 from src.scraper.scraper import extract_trip_zip
 
@@ -168,3 +170,14 @@ def test_scrape_station_creates_dest_dir(tmp_path, monkeypatch):
 
     assert (dest / "station.csv").exists()
     assert calls
+
+
+def test_stream_download_errors(tmp_path):
+    import src.scraper.scraper as sc
+
+    class DummySess:
+        def get(self, url, *a, **k):
+            raise requests.RequestException("fail")
+
+    with pytest.raises(RuntimeError):
+        sc.stream_download("http://x", tmp_path / "file", DummySess())

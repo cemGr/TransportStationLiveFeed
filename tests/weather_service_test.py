@@ -1,5 +1,8 @@
 import pandas as pd
 from unittest.mock import MagicMock, patch
+import pytest
+import requests
+from datetime import datetime
 
 import src.weather_service as ws
 
@@ -56,3 +59,10 @@ def test_main_inserts_weather(load_trips, cached_session, open_conn):
 
     executed = "".join(call[0][0] for call in cur.execute.call_args_list)
     assert "INSERT INTO public.station_weather" in executed
+
+
+def test_fetch_batch_error(monkeypatch):
+    session = MagicMock()
+    session.get.side_effect = requests.RequestException("fail")
+    with pytest.raises(RuntimeError):
+        ws._fetch_batch(session, [(1.0, 1.0)], datetime(2024, 1, 1), datetime(2024, 1, 1))

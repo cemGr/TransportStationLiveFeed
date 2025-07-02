@@ -77,15 +77,18 @@ def stream_download(url: str, dest: Path, session: requests.Session) -> Path | N
     if dest.exists():
         return None
     dest.parent.mkdir(parents=True, exist_ok=True)
-    with session.get(url, stream=True, timeout=TIMEOUT) as r:
-        r.raise_for_status()
-        total = int(r.headers.get("content-length", 0))
-        with tqdm(total=total, unit="B", unit_scale=True, desc=dest.name) as bar, open(
-            dest.with_suffix(".part"), "wb"
-        ) as f:
-            for chunk in r.iter_content(1 << 15):
-                f.write(chunk)
-                bar.update(len(chunk))
+    try:
+        with session.get(url, stream=True, timeout=TIMEOUT) as r:
+            r.raise_for_status()
+            total = int(r.headers.get("content-length", 0))
+            with tqdm(total=total, unit="B", unit_scale=True, desc=dest.name) as bar, open(
+                dest.with_suffix(".part"), "wb"
+            ) as f:
+                for chunk in r.iter_content(1 << 15):
+                    f.write(chunk)
+                    bar.update(len(chunk))
+    except requests.RequestException as exc:
+        raise RuntimeError(f"Failed to download {url}: {exc}") from exc
     dest.with_suffix(".part").rename(dest)
     return dest
 
