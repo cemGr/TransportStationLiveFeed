@@ -10,6 +10,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 # 4. Copy source code
 COPY src/ src/
+COPY infrastructure/ infrastructure/
+COPY domain/ domain/
 
 EXPOSE 8501
 
