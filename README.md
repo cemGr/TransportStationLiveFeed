@@ -277,11 +277,32 @@ export ORS_API_KEY="<your-key>"
 
 `train_rf.py` trains a baseline Random Forest on aggregated hourly data.
 Place your preprocessed dataset `trips_for_model.csv` in the project root and
-run:
+choose which target column to predict using the `--target` option (default
+`bikes_taken`). Valid choices are `bikes_taken`, `bikes_returned` and
+`net_usage` (returns minus rentals).
 
 ```bash
-python train_rf.py
+python train_rf.py --target net_usage
 ```
 
 The script prints MAE/RMSE metrics and saves the tuned model to
 `rf_hourly.pkl`.
+
+## Train the Gradient Boosting model
+
+`train_gb.py` uses XGBoost to forecast bike demand. Metrics are written to
+`xgb_evaluation_metrics.txt` and the trained model is saved as `xgb_model.pkl`.
+Ensure `trips_for_model.csv` is available in the project root and run:
+
+```bash
+python train_gb.py
+```
+
+To get an approximate idea of the training time you can run
+`estimate_runtime.py`.  The script fits the model on a few small samples
+and performs a linear regression on the measured runtimes to estimate the
+time required for the full dataset:
+
+```bash
+python estimate_runtime.py
+```

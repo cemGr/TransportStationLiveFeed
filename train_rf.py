@@ -12,6 +12,7 @@ pip install -U scikit-learn pandas numpy joblib
 
 # ---------- imports & env -----------------------------------------------
 import os, time, math
+import argparse
 import pandas as pd
 import numpy as np
 from sklearn.compose import ColumnTransformer
@@ -27,9 +28,18 @@ from sklearn.model_selection import (
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 from joblib import dump, parallel_backend
 
+parser = argparse.ArgumentParser(description="Train RandomForest demand model")
+parser.add_argument(
+    "--target",
+    choices=["bikes_taken", "bikes_returned", "net_usage"],
+    default="bikes_taken",
+    help="target column to predict",
+)
+args = parser.parse_args()
+
 # ---------- config -------------------------------------------------------
 CSV_PATH      = "trips_for_model.csv"
-TARGET_COL    = "bikes_taken"
+TARGET_COL    = args.target
 TIMESTAMP_COL = "slot_ts"
 CORES         = os.cpu_count() or 8       
 
@@ -41,6 +51,13 @@ df = pd.read_csv(CSV_PATH, low_memory=False)
 if TIMESTAMP_COL not in df.columns:
     raise KeyError(f"Column “{TIMESTAMP_COL}” not found.")
 df[TIMESTAMP_COL] = pd.to_datetime(df[TIMESTAMP_COL])
+
+# create net_usage if possible
+if {"bikes_taken", "bikes_returned"}.issubset(df.columns):
+    df["net_usage"] = df["bikes_returned"] - df["bikes_taken"]
+
+if TARGET_COL not in df.columns:
+    raise KeyError(f"Target column '{TARGET_COL}' not found.")
 
 # ---------- 2. feature engineering --------------------------------------
 df["hour"]       = df[TIMESTAMP_COL].dt.hour
