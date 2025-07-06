@@ -15,6 +15,7 @@ if str(_REPO_ROOT) not in sys.path:
 
 from infrastructure.db import DBStationRepository
 from usecases.stations import find_nearest_stations, find_nearest_docks
+from usecases.route_planner import suggest_fastest_route
 
 
 @st.cache_data(show_spinner=False)
@@ -124,62 +125,25 @@ if st.session_state.get("step") == 1:
 
     if st.button("Suggest fastest option", key="fastest_option"):
         client = _get_ors_client(api_key)
-        matrix = getattr(client, "matrix", client.distance_matrix)
         with st.spinner("Searching fastest route..."):
-            origins = list(origin_sel.values())
-            dests = list(dest_sel.values())
-            start_coords = [[o["longitude"], o["latitude"]] for o in origins]
-            end_coords = [[d["longitude"], d["latitude"]] for d in dests]
-
             try:
-                start_walk = matrix(
-                    locations=[[start_lon, start_lat], *start_coords],
-                    profile="foot-walking",
-                    sources=[0],
-                    destinations=list(range(1, len(start_coords) + 1)),
-                    metrics=["duration"],
-                )["durations"][0]
-
-                end_walk_res = matrix(
-                    locations=[*end_coords, [dest_lon, dest_lat]],
-                    profile="foot-walking",
-                    sources=list(range(len(end_coords))),
-                    destinations=[len(end_coords)],
-                    metrics=["duration"],
+                best_o, best_d, best_dur = suggest_fastest_route(
+                    client,
+                    (start_lon, start_lat),
+                    (dest_lon, dest_lat),
+                    list(origin_sel.values()),
+                    list(dest_sel.values()),
                 )
-                end_walk = [row[0] for row in end_walk_res["durations"]]
-
-                bike_res = matrix(
-                    locations=[*start_coords, *end_coords],
-                    profile="cycling-regular",
-                    sources=list(range(len(start_coords))),
-                    destinations=list(range(len(start_coords), len(start_coords) + len(end_coords))),
-                    metrics=["duration"],
-                )
-                bike_dur = bike_res["durations"]
             except Exception as exc:
                 st.error(f"OpenRouteService request failed: {exc}")
                 st.stop()
 
-            best_dur = float("inf")
-            best_o = None
-            best_d = None
-
-            for i, o in enumerate(origins):
-                for j, d in enumerate(dests):
-                    dur = (start_walk[i] + bike_dur[i][j] + end_walk[j]) / 60
-                    if dur < best_dur:
-                        best_dur = dur
-                        best_o = o
-                        best_d = d
-
-        if best_o and best_d:
-            st.session_state["origin_station"] = best_o
-            st.session_state["dest_station"] = best_d
-            st.session_state["step"] = 2
-            st.success(
-                f"Fastest option selected: {best_o['name']} → {best_d['name']} (≈{best_dur:.1f} min)"
-            )
+        st.session_state["origin_station"] = best_o
+        st.session_state["dest_station"] = best_d
+        st.session_state["step"] = 2
+        st.success(
+            f"Fastest option selected: {best_o['name']} → {best_d['name']} (≈{best_dur:.1f} min)"
+        )
 
 if st.session_state.get("step") == 2:
     st.subheader("2️⃣ Optimal route")

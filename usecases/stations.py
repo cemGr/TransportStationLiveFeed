@@ -1,7 +1,10 @@
 from __future__ import annotations
-
 from domain.repositories import StationRepository
-
+import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Point
+from shapely.strtree import STRtree
+import numpy as np
 
 def find_nearest_stations(
     repo: StationRepository, latitude: float, longitude: float, k: int = 5
@@ -16,12 +19,6 @@ def find_nearest_docks(
     """Return nearest docks via the provided repository."""
     return repo.nearest_docks(latitude, longitude, k)
 
-
-import pandas as pd
-import geopandas as gpd
-from shapely.geometry import Point
-from shapely.strtree import STRtree
-import numpy as np
 
 
 def find_k_nearest_stations(
