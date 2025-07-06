@@ -31,7 +31,7 @@ from joblib import dump, parallel_backend
 CSV_PATH      = "trips_for_model.csv"
 TARGET_COL    = "bikes_taken"
 TIMESTAMP_COL = "slot_ts"
-CORES         = os.cpu_count() or 8       # M4 Pro shows 12–14
+CORES         = os.cpu_count() or 8       
 
 # keep each tree single-threaded → no nested OpenMP contention
 os.environ["OMP_NUM_THREADS"] = "1"
