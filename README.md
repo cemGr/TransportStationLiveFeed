@@ -19,9 +19,17 @@ src/             # supporting scripts like the scraper
 tests/           # pytest suite
 ```
 
-## Installation
+## tl;dr: Quick installation and usage
 
 ```bash
+# use your own Openservice api Key for the routing operation
+# export ORS_API_KEY="<your-key>" or change it in the docker-compose.yml
+docker compose up -d
+#wait until all the container are build up (estimate 1-3 minutes)
+
+
+## Installation
+
 python3 -m venv .venv
 source .venv/bin/activate  # on Windows use `.venv\\Scripts\\activate`
 pip install --upgrade pip
